@@ -11,6 +11,7 @@ import {
   LogOut,
   CircleHelp,
   History,
+  MessageCircle,
   Sparkles,
   Target,
   TrendingDown,
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/analyze", label: "ИИ-анализ", icon: Sparkles },
   { href: "/history", label: "История", icon: History },
   { href: "/goals", label: "Цели", icon: Target },
+  { href: "/feedback", label: "Обратная связь", icon: MessageCircle },
   { href: "/faq", label: "FAQ", icon: CircleHelp },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { getAdminAnalytics, type AdminAnalyticsDashboard } from "@/lib/actions/admin-analytics";
+import { featureLabel } from "@/lib/feedback/constants";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,12 @@ const FEEDBACK_LABELS: Record<string, string> = {
   question: "Вопрос",
   confusion: "Не понял",
   idea: "Идея",
+};
+
+const MESSAGE_TYPE_LABELS: Record<string, string> = {
+  idea: "💡 Идея",
+  bug: "🐞 Проблема",
+  confusion: "🤔 Непонятно",
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -170,6 +177,110 @@ export function AdminDashboardClient({
         </div>
       </Card>
 
+      <Card className="border-accent/30 bg-accent/5">
+        <CardHeader>
+          <CardTitle className="text-base">Опрос после ИИ-анализа</CardTitle>
+          <CardDescription>
+            Ответы пользователей о полезности продукта
+          </CardDescription>
+        </CardHeader>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 px-5 pb-5">
+          <div className="rounded-lg bg-surface-hover/50 p-4 text-center">
+            <p className="text-2xl font-bold">
+              {data.productFeedback.avgUsefulness ?? "—"}
+            </p>
+            <p className="text-xs text-muted mt-1">Средняя полезность (1–10)</p>
+          </div>
+          <div className="rounded-lg bg-surface-hover/50 p-4 text-center sm:col-span-2">
+            <p className="text-2xl font-bold">
+              {data.productFeedback.responseCount}
+            </p>
+            <p className="text-xs text-muted mt-1">Завершённых опросов за период</p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RankList
+          title="Самые полезные функции"
+          items={data.productFeedback.popularFeatures}
+        />
+        <RankList
+          title="Если FinPilot исчезнет"
+          items={data.productFeedback.disappearanceDistribution}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Последние отзывы (опрос)</CardTitle>
+          </CardHeader>
+          <ul className="px-5 pb-5 space-y-3 max-h-96 overflow-y-auto">
+            {data.productFeedback.recentSurveys.length === 0 ? (
+              <li className="text-sm text-muted">Пока нет отзывов</li>
+            ) : (
+              data.productFeedback.recentSurveys.map((s) => (
+                <li
+                  key={s.id}
+                  className="text-sm rounded-lg border border-border/50 p-3 bg-surface-hover/30"
+                >
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <Badge variant="success">
+                      Полезность: {s.usefulness_score ?? "—"}/10
+                    </Badge>
+                    {s.disappearance_score && (
+                      <Badge variant="default">{s.disappearance_score}</Badge>
+                    )}
+                  </div>
+                  {s.most_useful_features?.length > 0 && (
+                    <p className="text-xs text-muted mb-1">
+                      Полезно:{" "}
+                      {s.most_useful_features.map(featureLabel).join(", ")}
+                    </p>
+                  )}
+                  {s.confusion_text && (
+                    <p className="text-sm">Не поняли: {s.confusion_text}</p>
+                  )}
+                  <p className="text-xs text-muted mt-2">
+                    {formatHistoryDate(s.created_at.split("T")[0])}
+                  </p>
+                </li>
+              ))
+            )}
+          </ul>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Сообщения обратной связи
+            </CardTitle>
+            <CardDescription>Страница «Обратная связь»</CardDescription>
+          </CardHeader>
+          <ul className="px-5 pb-5 space-y-3 max-h-96 overflow-y-auto">
+            {data.productFeedback.recentMessages.length === 0 ? (
+              <li className="text-sm text-muted">Пока нет сообщений</li>
+            ) : (
+              data.productFeedback.recentMessages.map((m) => (
+                <li
+                  key={m.id}
+                  className="text-sm rounded-lg border border-border/50 p-3"
+                >
+                  <Badge variant="default" className="mb-2">
+                    {MESSAGE_TYPE_LABELS[m.type] ?? m.type}
+                  </Badge>
+                  <p>{m.message}</p>
+                  <p className="text-xs text-muted mt-2">
+                    {formatHistoryDate(m.created_at.split("T")[0])}
+                  </p>
+                </li>
+              ))
+            )}
+          </ul>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RankList
           title="Куда нажимают первым"
@@ -310,8 +421,9 @@ export function AdminDashboardClient({
             1. Добавьте email в <code className="text-accent">ADMIN_EMAILS</code>{" "}
             в <code>.env.local</code>
             <br />
-            2. Выполните миграцию{" "}
-            <code className="text-accent">009_product_analytics.sql</code>
+            2. Выполните миграции{" "}
+            <code className="text-accent">009</code>–
+            <code className="text-accent">012</code>
             <br />
             3. В Supabase SQL:{" "}
             <code className="text-accent">

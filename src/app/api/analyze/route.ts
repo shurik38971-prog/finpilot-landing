@@ -238,6 +238,22 @@ export async function POST(_req: Request) {
 
     await markOnboardingStep("analysis");
 
+    const [{ count: analysisCount }, { data: existingFeedback }] =
+      await Promise.all([
+        supabase
+          .from("analyses")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        supabase
+          .from("feedback")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+
+    const showFeedbackSurvey =
+      !existingFeedback && (analysisCount ?? 0) === 1;
+
     revalidatePath("/history");
     revalidatePath("/actions");
     revalidatePath("/dashboard");
@@ -254,7 +270,11 @@ export async function POST(_req: Request) {
       },
     });
 
-    return NextResponse.json({ ...parsed, tasks_created: tasksCreated });
+    return NextResponse.json({
+      ...parsed,
+      tasks_created: tasksCreated,
+      show_feedback_survey: showFeedbackSurvey,
+    });
   } catch (error) {
     console.error("Analyze error:", error);
 

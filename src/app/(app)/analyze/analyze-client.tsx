@@ -15,6 +15,7 @@ import type {
   AnalysisPlanItem,
   HealthStatus,
 } from "@/types/analysis";
+import { PostAnalysisSurveyModal } from "@/components/feedback/post-analysis-survey-modal";
 import { trackButtonClick } from "@/lib/analytics/client";
 import { COPY } from "@/lib/copy/ui";
 import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
@@ -82,6 +83,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
   const [result, setResult] = useState<AnalysisApiResponse | null>(null);
   const [tasksCreated, setTasksCreated] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [surveyOpen, setSurveyOpen] = useState(false);
 
   async function handleAnalyze() {
     setLoading(true);
@@ -100,11 +102,16 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
         return;
       }
 
-      const { tasks_created, ...analysis } = data as AnalysisApiResponse & {
-        tasks_created?: number;
-      };
+      const { tasks_created, show_feedback_survey, ...analysis } =
+        data as AnalysisApiResponse & {
+          tasks_created?: number;
+          show_feedback_survey?: boolean;
+        };
       setResult(analysis);
       setTasksCreated(tasks_created ?? 0);
+      if (show_feedback_survey) {
+        setSurveyOpen(true);
+      }
     } catch {
       setError("Не удалось выполнить анализ");
     } finally {
@@ -114,6 +121,11 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
 
   return (
     <div>
+      <PostAnalysisSurveyModal
+        open={surveyOpen}
+        onClose={() => setSurveyOpen(false)}
+        onComplete={() => setSurveyOpen(false)}
+      />
       <PageHeader
         title="ИИ-анализ"
         description="Персональный разбор ваших денег и что делать дальше"
