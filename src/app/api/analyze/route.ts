@@ -1,5 +1,6 @@
 import { getAnalysisContext } from "@/lib/actions/finance";
 import { createClient } from "@/lib/supabase/server";
+import type { AiAnalysisResult } from "@/types/analysis";
 import { NextResponse } from "next/server";
 
 function getGptunnelConfig():
@@ -49,14 +50,44 @@ function extractJsonFromText(text: string) {
   }
 }
 
+function buildAnalysisPrompt(context: Awaited<ReturnType<typeof getAnalysisContext>>) {
+  return `
+Проанализируй финансовые данные самозанятого:
+${JSON.stringify(context, null, 2)}
+
+Ответь строго в JSON формате:
+{
+  "summary": "краткая диагностика текущего положения",
+  "health_status": "good | bad | critical",
+  "health_explanation": "если положение хорошее — объясни почему; если плохое — прямо и без смягчения",
+  "main_threat": "главная угроза для финансов",
+  "money_leaks": ["утечка денег 1", "утечка денег 2"],
+  "cash_gap_risk": {
+    "level": "high | medium | low",
+    "description": "риск кассового разрыва и его причины",
+    "months_until_gap": 0
+  },
+  "plan_7_days": [
+    { "action": "конкретное действие", "why": "зачем это срочно" }
+  ],
+  "plan_30_days": [
+    { "action": "конкретное действие", "why": "ожидаемый эффект" }
+  ],
+  "plan_90_days": [
+    { "action": "конкретное действие", "why": "стратегический эффект" }
+  ]
+}
+
+Не добавляй markdown. Не добавляй пояснения вне JSON. Верни только JSON.
+`;
+}
+
 export async function GET() {
   return NextResponse.json({ ok: true, route: "/api/analyze" });
 }
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   try {
-    console.log("Analyze route started");
-
     const supabase = await createClient();
 
     const {
@@ -73,43 +104,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: config.error }, { status: 500 });
     }
 
-    const body = await getAnalysisContext();
-
-    const prompt = `
-Ты — строгий финансовый аналитик для самозанятого человека.
-
-Проанализируй данные пользователя:
-${JSON.stringify(body, null, 2)}
-
-Ответь строго в JSON формате:
-{
-  "summary": "краткая диагностика",
-  "main_problem": "главная проблема",
-  "risks": [
-    {
-      "level": "high | medium | low",
-      "title": "название риска",
-      "description": "описание"
-    }
-  ],
-  "actions_30_days": [
-    {
-      "priority": "high | medium | low",
-      "action": "конкретное действие",
-      "effect": "ожидаемый эффект"
-    }
-  ],
-  "debt_recommendation": "что делать с долгами",
-  "cashflow_forecast_comment": "комментарий по денежному потоку"
-}
-
-Не добавляй markdown. Не добавляй пояснения. Верни только JSON.
-`;
-
+    const context = await getAnalysisContext();
+    const prompt = buildAnalysisPrompt(context);
     const apiUrl = `${config.baseUrl}/chat/completions`;
-
-    console.log("GPTunnel API URL:", apiUrl);
-    console.log("GPTunnel model:", config.model);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -122,8 +119,17 @@ ${JSON.stringify(body, null, 2)}
         messages: [
           {
             role: "system",
-            content:
-              "Ты финансовый аналитик. Отвечай только валидным JSON без markdown.",
+            content: `Ты не консультант. Ты финансовый директор самозанятого с нестабильным доходом и долгами.
+Твоя задача:
+- найти главную угрозу;
+- найти утечки денег;
+- определить риск кассового разрыва;
+- дать план на 7 дней;
+- дать план на 30 дней;
+- дать план на 90 дней.
+Если финансовое положение хорошее — объясни почему.
+Если плохое — не смягчай формулировки.
+Отвечай только валидным JSON без markdown.`,
           },
           {
             role: "user",
@@ -144,8 +150,6 @@ ${JSON.stringify(body, null, 2)}
           error: "Ошибка GPTunnel API",
           status: response.status,
           details: errorText,
-          url: apiUrl,
-          model: config.model,
         },
         { status: response.status }
       );
@@ -156,15 +160,28 @@ ${JSON.stringify(body, null, 2)}
 
     if (!content) {
       return NextResponse.json(
-        {
-          error: "Пустой ответ от ИИ",
-          raw: data,
-        },
+        { error: "Пустой ответ от ИИ", raw: data },
         { status: 500 }
       );
     }
 
-    const parsed = extractJsonFromText(content);
+    const parsed = extractJsonFromText(content) as AiAnalysisResult;
+    console.log("Model used:", config.model);
+
+    const mainProblem =
+      parsed.main_threat?.trim() || parsed.summary?.trim() || "Не определена";
+
+    const { error: saveError } = await supabase.from("analyses").insert({
+      user_id: user.id,
+      financial_index: context.financialIndex,
+      main_problem: mainProblem,
+      recommendations: parsed,
+      model_used: config.model,
+    });
+
+    if (saveError) {
+      console.error("Failed to save analysis:", saveError);
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {

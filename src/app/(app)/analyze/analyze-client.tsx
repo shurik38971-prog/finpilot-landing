@@ -9,51 +9,74 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type {
+  AiAnalysisResult,
+  AnalysisLevel,
+  AnalysisPlanItem,
+  HealthStatus,
+} from "@/types/analysis";
 import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 
-type Level = "high" | "medium" | "low";
-
-interface AnalysisRisk {
-  level: Level;
-  title: string;
-  description: string;
-}
-
-interface AnalysisAction {
-  priority: Level;
-  action: string;
-  effect: string;
-}
-
-interface AnalysisResult {
-  summary: string;
-  main_problem: string;
-  risks: AnalysisRisk[];
-  actions_30_days: AnalysisAction[];
-  debt_recommendation: string;
-  cashflow_forecast_comment: string;
-}
-
-const levelLabels: Record<Level, string> = {
+const levelLabels: Record<AnalysisLevel, string> = {
   high: "Высокий",
   medium: "Средний",
   low: "Низкий",
 };
 
-const levelVariants: Record<Level, "danger" | "warning" | "default"> = {
+const levelVariants: Record<AnalysisLevel, "danger" | "warning" | "default"> = {
   high: "danger",
   medium: "warning",
   low: "default",
+};
+
+const healthLabels: Record<HealthStatus, string> = {
+  good: "Стабильно",
+  bad: "Плохо",
+  critical: "Критично",
+};
+
+const healthVariants: Record<HealthStatus, "success" | "warning" | "danger"> = {
+  good: "success",
+  bad: "warning",
+  critical: "danger",
 };
 
 interface AnalyzePageClientProps {
   isEmpty: boolean;
 }
 
+function PlanList({
+  title,
+  items,
+  accent,
+}: {
+  title: string;
+  items: AnalysisPlanItem[];
+  accent: string;
+}) {
+  if (!items?.length) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className={`text-base ${accent}`}>{title}</CardTitle>
+      </CardHeader>
+      <ul className="px-5 pb-5 space-y-4">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm">
+            <p className="font-medium">{item.action}</p>
+            <p className="text-muted leading-relaxed mt-1">{item.why}</p>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<AiAnalysisResult | null>(null);
   const [error, setError] = useState("");
 
   async function handleAnalyze() {
@@ -118,8 +141,8 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
           <CardHeader>
             <CardTitle>Финансовый директор на базе ИИ</CardTitle>
             <CardDescription>
-              Нажмите «Запустить анализ», чтобы получить диагностику, риски,
-              план на 30 дней и рекомендации по долгам и денежному потоку
+              Получите диагностику, утечки денег, оценку риска кассового разрыва
+              и планы на 7, 30 и 90 дней
             </CardDescription>
           </CardHeader>
         </Card>
@@ -129,85 +152,88 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Диагностика</CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle>Диагностика</CardTitle>
+                {result.health_status && (
+                  <Badge variant={healthVariants[result.health_status]}>
+                    {healthLabels[result.health_status]}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
-            <p className="px-5 pb-5 text-sm leading-relaxed whitespace-pre-wrap">
-              {result.summary}
-            </p>
+            <div className="px-5 pb-5 space-y-3 text-sm leading-relaxed">
+              <p className="whitespace-pre-wrap">{result.summary}</p>
+              {result.health_explanation && (
+                <p className="text-muted">{result.health_explanation}</p>
+              )}
+            </div>
           </Card>
 
           <Card className="border-orange-500/30 bg-orange-500/5">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-400" />
-                Главная проблема
+                Главная угроза
               </CardTitle>
             </CardHeader>
             <p className="px-5 pb-5 text-sm leading-relaxed">
-              {result.main_problem}
+              {result.main_threat}
             </p>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-red-400">Риски</CardTitle>
-            </CardHeader>
-            <ul className="px-5 pb-5 space-y-4">
-              {result.risks?.map((risk, i) => (
-                <li key={i} className="text-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={levelVariants[risk.level] ?? "default"}>
-                      {levelLabels[risk.level] ?? risk.level}
-                    </Badge>
-                    <span className="font-medium">{risk.title}</span>
-                  </div>
-                  <p className="text-muted leading-relaxed">{risk.description}</p>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          {result.money_leaks?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base text-red-400">
+                  Утечки денег
+                </CardTitle>
+              </CardHeader>
+              <ul className="px-5 pb-5 space-y-2 text-sm">
+                {result.money_leaks.map((leak, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-red-400 shrink-0">•</span>
+                    {leak}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-emerald-400">
-                План на 30 дней
-              </CardTitle>
-            </CardHeader>
-            <ul className="px-5 pb-5 space-y-4">
-              {result.actions_30_days?.map((item, i) => (
-                <li key={i} className="text-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={levelVariants[item.priority] ?? "default"}>
-                      {levelLabels[item.priority] ?? item.priority}
-                    </Badge>
-                    <span className="font-medium">{item.action}</span>
-                  </div>
-                  <p className="text-muted leading-relaxed">
-                    Эффект: {item.effect}
+          {result.cash_gap_risk && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Риск кассового разрыва</CardTitle>
+              </CardHeader>
+              <div className="px-5 pb-5 space-y-2 text-sm">
+                <Badge variant={levelVariants[result.cash_gap_risk.level]}>
+                  {levelLabels[result.cash_gap_risk.level]}
+                </Badge>
+                <p className="leading-relaxed">{result.cash_gap_risk.description}</p>
+                {result.cash_gap_risk.months_until_gap != null && (
+                  <p className="text-muted">
+                    Оценка до разрыва: {result.cash_gap_risk.months_until_gap} мес.
                   </p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Долги</CardTitle>
-              </CardHeader>
-              <p className="px-5 pb-5 text-sm leading-relaxed">
-                {result.debt_recommendation}
-              </p>
+                )}
+              </div>
             </Card>
+          )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Денежный поток</CardTitle>
-              </CardHeader>
-              <p className="px-5 pb-5 text-sm leading-relaxed">
-                {result.cashflow_forecast_comment}
-              </p>
-            </Card>
+          <div className="grid grid-cols-1 gap-6">
+            <PlanList
+              title="План на 7 дней"
+              items={result.plan_7_days}
+              accent="text-orange-400"
+            />
+            <PlanList
+              title="План на 30 дней"
+              items={result.plan_30_days}
+              accent="text-emerald-400"
+            />
+            <PlanList
+              title="План на 90 дней"
+              items={result.plan_90_days}
+              accent="text-accent"
+            />
           </div>
         </div>
       )}
