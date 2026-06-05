@@ -12,19 +12,49 @@ function getGptunnelConfig():
   if (!apiKey) {
     return { ok: false, error: "GPTUNNEL_API_KEY не настроен" };
   }
+
   if (!baseUrl) {
     return { ok: false, error: "GPTUNNEL_BASE_URL не настроен" };
   }
+
   if (!model) {
     return { ok: false, error: "GPTUNNEL_MODEL не настроен" };
   }
 
-  return { ok: true, apiKey, baseUrl: baseUrl.replace(/\/$/, ""), model };
+  return {
+    ok: true,
+    apiKey,
+    baseUrl: baseUrl.replace(/\/$/, ""),
+    model,
+  };
 }
 
-export async function POST() {
+function extractJsonFromText(text: string) {
+  const cleaned = text
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
   try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+
+    if (start === -1 || end === -1 || end <= start) {
+      throw new Error("ИИ вернул ответ без JSON");
+    }
+
+    return JSON.parse(cleaned.slice(start, end + 1));
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    console.log("Analyze route started");
+
     const supabase = await createClient();
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -34,6 +64,7 @@ export async function POST() {
     }
 
     const config = getGptunnelConfig();
+
     if (!config.ok) {
       return NextResponse.json({ error: config.error }, { status: 500 });
     }
@@ -67,9 +98,16 @@ ${JSON.stringify(body, null, 2)}
   "debt_recommendation": "что делать с долгами",
   "cashflow_forecast_comment": "комментарий по денежному потоку"
 }
+
+Не добавляй markdown. Не добавляй пояснения. Верни только JSON.
 `;
 
-    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+    const apiUrl = `${config.baseUrl}/chat/completions`;
+
+    console.log("GPTunnel API URL:", apiUrl);
+    console.log("GPTunnel model:", config.model);
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
@@ -94,8 +132,17 @@ ${JSON.stringify(body, null, 2)}
 
     if (!response.ok) {
       const errorText = await response.text();
+
+      console.error("GPTunnel error:", response.status, errorText);
+
       return NextResponse.json(
-        { error: "Ошибка GPTunnel API", details: errorText },
+        {
+          error: "Ошибка GPTunnel API",
+          status: response.status,
+          details: errorText,
+          url: apiUrl,
+          model: config.model,
+        },
         { status: response.status }
       );
     }
@@ -105,17 +152,15 @@ ${JSON.stringify(body, null, 2)}
 
     if (!content) {
       return NextResponse.json(
-        { error: "Пустой ответ от ИИ" },
+        {
+          error: "Пустой ответ от ИИ",
+          raw: data,
+        },
         { status: 500 }
       );
     }
 
-    const cleanContent = content
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanContent);
+    const parsed = extractJsonFromText(content);
 
     return NextResponse.json(parsed);
   } catch (error) {
