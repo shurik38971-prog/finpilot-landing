@@ -21,22 +21,41 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (authError) {
-      setError(authError.message);
+    try {
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (authError) {
+        if (authError.message.includes("email rate limit exceeded")) {
+          setError("Слишком много запросов. Попробуйте через 30–60 минут.");
+        } else {
+          setError(authError.message);
+        }
+        setLoading(false);
+        return;
+      }
+      try {
+        await trackClientEvent(ANALYTICS_EVENTS.SIGNUP);
+      } catch (eventError) {
+        console.error("Failed to track signup event:", eventError);
+      }
+      if (data.session) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+      router.push("/login?message=check_email");
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Не удалось создать аккаунт. Попробуйте ещё раз."
+      );
       setLoading(false);
-      return;
     }
-
-    trackClientEvent(ANALYTICS_EVENTS.SIGNUP);
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
