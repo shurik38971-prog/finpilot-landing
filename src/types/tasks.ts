@@ -1,9 +1,13 @@
+import type { FinancialGoal } from "@/types/goals";
+
 export type TaskStatus = "pending" | "done" | "postponed";
 
 export interface FinancialTask {
   id: string;
   user_id: string;
   analysis_id: string | null;
+  goal_id: string | null;
+  goal_progress_amount: number | null;
   title: string;
   description: string | null;
   impact_score: number;
@@ -14,8 +18,24 @@ export interface FinancialTask {
   completed_at: string | null;
 }
 
+export type FinancialTaskGoal = Pick<
+  FinancialGoal,
+  "id" | "title" | "type" | "target_amount" | "current_amount"
+>;
+
+export interface FinancialTaskWithGoal extends FinancialTask {
+  goal: FinancialTaskGoal | null;
+}
+
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   pending: "Активна",
   done: "Выполнена",
   postponed: "Отложена",
 };
+
+export interface PrimaryGoalFocus {
+  goal: FinancialTaskGoal;
+  task: FinancialTaskWithGoal | null;
+  remaining: number;
+  progressPercent: number;
+}

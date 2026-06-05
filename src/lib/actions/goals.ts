@@ -59,6 +59,8 @@ export async function createGoal(formData: FormData) {
 
   if (error) throw error;
   revalidatePath("/goals");
+  revalidatePath("/dashboard");
+  revalidatePath("/actions");
 }
 
 export async function updateGoal(id: string, formData: FormData) {
@@ -76,6 +78,8 @@ export async function updateGoal(id: string, formData: FormData) {
 
   if (error) throw error;
   revalidatePath("/goals");
+  revalidatePath("/dashboard");
+  revalidatePath("/actions");
 }
 
 export async function deleteGoal(id: string) {
@@ -83,4 +87,6 @@ export async function deleteGoal(id: string) {
   const { error } = await supabase.from("financial_goals").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/goals");
+  revalidatePath("/dashboard");
+  revalidatePath("/actions");
 }

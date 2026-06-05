@@ -10,8 +10,9 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatHistoryDate } from "@/lib/utils";
-import type { FinancialTask } from "@/types/tasks";
+import type { FinancialTaskWithGoal } from "@/types/tasks";
 import { TASK_STATUS_LABELS } from "@/types/tasks";
+import { GOAL_TYPE_LABELS } from "@/types/goals";
 import {
   CheckCircle2,
   Clock,
@@ -29,8 +30,26 @@ function impactVariant(score: number): "danger" | "warning" | "success" | "defau
   return "default";
 }
 
+function GoalBadge({ task }: { task: FinancialTaskWithGoal }) {
+  if (!task.goal) return null;
+
+  return (
+    <Link
+      href="/goals"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex"
+    >
+      <Badge variant="default" className="gap-1">
+        <Target className="h-3 w-3" />
+        {task.goal.title}
+        <span className="text-muted">· {GOAL_TYPE_LABELS[task.goal.type]}</span>
+      </Badge>
+    </Link>
+  );
+}
+
 function statusVariant(
-  status: FinancialTask["status"]
+  status: FinancialTaskWithGoal["status"]
 ): "success" | "warning" | "default" {
   if (status === "done") return "success";
   if (status === "postponed") return "warning";
@@ -42,7 +61,7 @@ function PrimaryActionCard({
   loadingId,
   onComplete,
 }: {
-  task: FinancialTask;
+  task: FinancialTaskWithGoal;
   loadingId: string | null;
   onComplete: (id: string) => void;
 }) {
@@ -53,6 +72,9 @@ function PrimaryActionCard({
           <div>
             <p className="text-xs text-muted mb-1">Главное действие месяца</p>
             <CardTitle className="text-lg">{task.title}</CardTitle>
+            <div className="mt-2">
+              <GoalBadge task={task} />
+            </div>
           </div>
           <Badge variant={impactVariant(task.impact_score)}>
             {task.impact_label ?? `${task.impact_score}`}
@@ -98,7 +120,7 @@ function TaskRow({
   onPostpone,
   onDelete,
 }: {
-  task: FinancialTask;
+  task: FinancialTaskWithGoal;
   loadingId: string | null;
   onComplete: (id: string) => void;
   onPostpone: (id: string) => void;
@@ -135,6 +157,7 @@ function TaskRow({
         {task.description && (
           <p className="text-sm text-muted leading-relaxed">{task.description}</p>
         )}
+        <GoalBadge task={task} />
         <p className="text-xs text-muted">
           {formatHistoryDate(task.created_at.split("T")[0])}
           {task.due_date && ` · срок ${formatHistoryDate(task.due_date)}`}
@@ -176,7 +199,7 @@ function TaskRow({
 }
 
 interface ActionsPageClientProps {
-  tasks: FinancialTask[];
+  tasks: FinancialTaskWithGoal[];
 }
 
 export function ActionsPageClient({ tasks }: ActionsPageClientProps) {

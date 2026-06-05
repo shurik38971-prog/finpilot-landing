@@ -10,17 +10,22 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { Debt } from "@/types/database";
 import type { FinancialGoal } from "@/types/goals";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
-import { Loader2, Plus, Target, Trash2 } from "lucide-react";
+import type { FinancialTaskWithGoal } from "@/types/tasks";
+import { TASK_STATUS_LABELS } from "@/types/tasks";
+import { CheckCircle2, Loader2, Plus, Target, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 function GoalCard({
   goal,
+  tasks,
   onEdit,
   onDelete,
   deleting,
 }: {
   goal: FinancialGoal;
+  tasks: FinancialTaskWithGoal[];
   onEdit: () => void;
   onDelete: () => void;
   deleting: boolean;
@@ -79,6 +84,38 @@ function GoalCard({
           <span>{progress}%</span>
           {goal.deadline && <span>до {formatDate(goal.deadline)}</span>}
         </div>
+
+        {tasks.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs text-muted mb-2 flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Связанные задачи ({tasks.length})
+            </p>
+            <ul className="space-y-2">
+              {tasks.slice(0, 4).map((task) => (
+                <li key={task.id} className="text-sm">
+                  <Link
+                    href="/actions"
+                    className="hover:text-accent transition-colors"
+                  >
+                    {task.title}
+                  </Link>
+                  <span className="text-xs text-muted ml-2">
+                    {TASK_STATUS_LABELS[task.status]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {tasks.length > 4 && (
+              <Link
+                href="/actions"
+                className="text-xs text-accent mt-2 inline-block"
+              >
+                Ещё {tasks.length - 4} на странице действий
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -87,9 +124,10 @@ function GoalCard({
 interface GoalsPageClientProps {
   goals: FinancialGoal[];
   debts: Debt[];
+  tasks: FinancialTaskWithGoal[];
 }
 
-export function GoalsPageClient({ goals, debts }: GoalsPageClientProps) {
+export function GoalsPageClient({ goals, debts, tasks }: GoalsPageClientProps) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<FinancialGoal | undefined>();
@@ -159,6 +197,7 @@ export function GoalsPageClient({ goals, debts }: GoalsPageClientProps) {
             <GoalCard
               key={goal.id}
               goal={goal}
+              tasks={tasks.filter((t) => t.goal_id === goal.id)}
               onEdit={() => openEdit(goal)}
               onDelete={() => handleDelete(goal.id)}
               deleting={deletingId === goal.id}
