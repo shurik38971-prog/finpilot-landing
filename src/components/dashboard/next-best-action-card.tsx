@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
+import { trackButtonClick } from "@/lib/analytics/client";
 import { COPY, importanceLabel } from "@/lib/copy/ui";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
@@ -165,7 +166,10 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
             </Button>
             <Button
               variant="secondary"
-              onClick={() => setWhyOpen(true)}
+              onClick={() => {
+                trackButtonClick("nba-why-important", "Почему это важно");
+                setWhyOpen(true);
+              }}
               disabled={loading}
             >
               <HelpCircle className="h-4 w-4" />

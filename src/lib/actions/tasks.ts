@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { syncPendingTaskPriorities } from "@/lib/ai/sync-task-priorities";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { trackServerEvent } from "@/lib/analytics/track-server";
 import { applyGoalProgressOnTaskComplete } from "@/lib/finance/goal-progress";
 import { pickPrimaryGoal } from "@/lib/finance/match-task-to-goal";
 import {
@@ -257,6 +259,13 @@ export async function completeTask(id: string) {
   }
 
   await syncPendingTaskPriorities(supabase, userId);
+  await trackServerEvent({
+    event_name: ANALYTICS_EVENTS.TASK_COMPLETED,
+    user_id: userId,
+    page_path: "/actions",
+    element_id: id,
+    properties: { title: task.title },
+  });
   revalidateTaskPages();
 }
 

@@ -15,6 +15,7 @@ import type {
   AnalysisPlanItem,
   HealthStatus,
 } from "@/types/analysis";
+import { trackButtonClick } from "@/lib/analytics/client";
 import { COPY } from "@/lib/copy/ui";
 import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -87,6 +88,8 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
     setError("");
     setResult(null);
     setTasksCreated(null);
+
+    trackButtonClick("analyze-run", "Запустить ИИ-анализ");
 
     try {
       const res = await fetch("/api/analyze", { method: "POST" });

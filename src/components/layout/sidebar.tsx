@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { trackClientEvent } from "@/lib/analytics/client";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
@@ -38,9 +40,14 @@ const navItems = [
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  isAdmin?: boolean;
 }
 
-export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar({
+  mobileOpen = false,
+  onMobileClose,
+  isAdmin = false,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -51,7 +58,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     router.refresh();
   }
 
-  function handleNavClick() {
+  function handleNavClick(label: string, href: string) {
+    trackClientEvent(ANALYTICS_EVENTS.NAV_CLICK, {
+      element_id: href,
+      properties: { label },
+    });
     onMobileClose?.();
   }
 
@@ -78,7 +89,9 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           <Link
             key={href}
             href={href}
-            onClick={handleNavClick}
+            onClick={() => handleNavClick(label, href)}
+            data-analytics-id={`nav-${href}`}
+            data-analytics-label={label}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
               pathname === href
@@ -90,6 +103,22 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             {label}
           </Link>
         ))}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            onClick={() => handleNavClick("Админка", "/admin")}
+            data-analytics-id="nav-admin"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors mt-2 border border-dashed border-accent/30",
+              pathname.startsWith("/admin")
+                ? "bg-accent/10 text-accent"
+                : "text-muted hover:bg-surface-hover hover:text-foreground"
+            )}
+          >
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            Админка
+          </Link>
+        )}
       </nav>
 
       <div className="border-t border-border p-3">

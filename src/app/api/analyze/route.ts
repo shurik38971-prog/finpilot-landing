@@ -1,3 +1,5 @@
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { trackServerEvent } from "@/lib/analytics/track-server";
 import { getAnalysisContext } from "@/lib/actions/finance";
 import {
   computeIndexDelta,
@@ -104,6 +106,12 @@ export async function POST(_req: Request) {
     if (!config.ok) {
       return NextResponse.json({ error: config.error }, { status: 500 });
     }
+
+    await trackServerEvent({
+      event_name: ANALYTICS_EVENTS.ANALYZE_STARTED,
+      user_id: user.id,
+      page_path: "/analyze",
+    });
 
     const context = await getAnalysisContext();
     const today = getTodayDateString();
@@ -233,9 +241,35 @@ export async function POST(_req: Request) {
     revalidatePath("/goals");
     revalidatePath("/simulator");
 
+    await trackServerEvent({
+      event_name: ANALYTICS_EVENTS.ANALYZE_COMPLETED,
+      user_id: user.id,
+      page_path: "/analyze",
+      properties: {
+        tasks_created: tasksCreated,
+        index: context.financialIndex ?? null,
+      },
+    });
+
     return NextResponse.json({ ...parsed, tasks_created: tasksCreated });
   } catch (error) {
     console.error("Analyze error:", error);
+
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await trackServerEvent({
+          event_name: ANALYTICS_EVENTS.ANALYZE_FAILED,
+          user_id: user.id,
+          page_path: "/analyze",
+        });
+      }
+    } catch {
+      /* ignore tracking errors */
+    }
 
     return NextResponse.json(
       {

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { trackClientEvent } from "@/lib/analytics/client";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { useState } from "react";
 
 interface DemoDataBannerProps {
@@ -25,6 +27,7 @@ export function DemoDataBanner({ isEmpty }: DemoDataBannerProps) {
     setError("");
     try {
       await seedDemoData(force || !isEmpty);
+      trackClientEvent(ANALYTICS_EVENTS.DEMO_LOADED);
       router.refresh();
       notifyFinancialDataChanged();
     } catch (e) {

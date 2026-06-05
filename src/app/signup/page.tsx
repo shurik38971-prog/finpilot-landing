@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { trackClientEvent } from "@/lib/analytics/client";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { useState } from "react";
 
 export default function SignupPage() {
@@ -32,6 +34,7 @@ export default function SignupPage() {
       return;
     }
 
+    trackClientEvent(ANALYTICS_EVENTS.SIGNUP);
     router.push("/dashboard");
     router.refresh();
   }
