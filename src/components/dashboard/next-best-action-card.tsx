@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { trackButtonClick } from "@/lib/analytics/client";
-import { COPY, importanceLabel } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { COPY, HINTS, importanceLabel } from "@/lib/copy/ui";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
 import type { NextBestActionResult } from "@/types/tasks";
@@ -76,8 +77,9 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-accent mb-1">
-                Следующее лучшее действие
+              <p className="text-xs uppercase tracking-wide text-accent mb-1 flex items-center gap-1">
+                Главное действие
+                <HintTooltip hint={HINTS.mainAction} />
               </p>
               <CardTitle className="text-xl md:text-2xl leading-tight">
                 {action.title}

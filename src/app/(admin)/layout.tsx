@@ -1,4 +1,4 @@
-import { isAdminEmail } from "@/lib/admin/is-admin";
+import { isAdminUser } from "@/lib/admin/is-admin";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -15,7 +15,7 @@ export default async function AdminLayout({
 
   if (!user) redirect("/login");
 
-  if (!isAdminEmail(user.email)) {
+  if (!(await isAdminUser(supabase, user.email))) {
     redirect("/dashboard");
   }
 

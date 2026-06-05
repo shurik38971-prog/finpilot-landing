@@ -1,4 +1,5 @@
-import { COPY } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { COPY, HINTS } from "@/lib/copy/ui";
 import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { TrendingDown, TrendingUp, Wallet, CreditCard } from "lucide-react";
@@ -48,7 +49,10 @@ export function SummaryCards(props: SummaryCardsProps) {
         <Card key={key}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted">{label}</p>
+              <p className="text-sm text-muted flex items-center gap-1">
+                {label}
+                {key === "net" && <HintTooltip hint={HINTS.freeMoney} />}
+              </p>
               <p className={`text-xl font-bold mt-1 ${key === "net" && getValue(props) < 0 ? "text-red-400" : ""}`}>
                 {formatCurrency(getValue(props))}
               </p>

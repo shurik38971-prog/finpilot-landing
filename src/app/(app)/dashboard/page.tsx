@@ -6,7 +6,9 @@ import { GoalFocusCard } from "@/components/dashboard/goal-focus-card";
 import { NextBestActionCard } from "@/components/dashboard/next-best-action-card";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PageHeader } from "@/components/layout/page-header";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { getFinancialData } from "@/lib/actions/finance";
+import { getOnboardingProgress } from "@/lib/actions/onboarding";
 import { getNextBestAction, getPrimaryGoalFocus } from "@/lib/actions/tasks";
 import { computeDashboardSummary } from "@/lib/finance/index";
 import { forecastCashFlow } from "@/lib/finance/forecast";
@@ -14,10 +16,12 @@ import { forecastCashFlow } from "@/lib/finance/forecast";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [{ incomes, expenses, debts }, goalFocus] = await Promise.all([
-    getFinancialData(),
-    getPrimaryGoalFocus(),
-  ]);
+  const [{ incomes, expenses, debts }, goalFocus, onboarding] =
+    await Promise.all([
+      getFinancialData(),
+      getPrimaryGoalFocus(),
+      getOnboardingProgress(),
+    ]);
 
   const {
     totalIncome,
@@ -43,6 +47,7 @@ export default async function DashboardPage() {
         />
 
         <div className="space-y-6">
+          {onboarding && <OnboardingChecklist progress={onboarding} />}
           <DemoDataBanner isEmpty={isEmpty} />
           <NextBestActionCard action={nextBestAction} />
           <GoalFocusCard focus={goalFocus} />

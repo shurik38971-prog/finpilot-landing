@@ -1,4 +1,5 @@
-import { COPY } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { COPY, HINTS } from "@/lib/copy/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { TaskImpact } from "@/types/task-impact";
 
@@ -120,7 +121,10 @@ export function TaskImpactPreview({
         className
       )}
     >
-      <p className="text-xs font-medium text-foreground">{COPY.whatChanges}</p>
+      <p className="text-xs font-medium text-foreground flex items-center gap-1">
+        Прогноз эффекта
+        <HintTooltip hint={HINTS.effectForecast} />
+      </p>
 
       <MetricRow
         label={COPY.moneyScore}

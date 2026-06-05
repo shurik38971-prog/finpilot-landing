@@ -12,7 +12,8 @@ import {
 } from "recharts";
 import type { CashFlowForecast } from "@/types/database";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { COPY } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { COPY, HINTS } from "@/lib/copy/ui";
 import { formatCurrency } from "@/lib/utils";
 
 interface CashFlowChartProps {
@@ -23,9 +24,16 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Прогноз на 3 месяца</CardTitle>
-        <CardDescription>
-          Сколько останется каждый месяц с учётом нестабильного дохода
+        <CardTitle className="flex items-center gap-1.5">
+          Прогноз на 3 месяца
+        </CardTitle>
+        <CardDescription className="flex flex-wrap items-center gap-1">
+          <span className="inline-flex items-center gap-1">
+            {COPY.safetyBuffer}
+            <HintTooltip hint={HINTS.safetyBuffer} />
+          </span>
+          <span className="text-muted/70">·</span>
+          <span>Сколько останется каждый месяц</span>
         </CardDescription>
       </CardHeader>
       <div className="h-72">

@@ -1,6 +1,7 @@
 "use client";
 
-import { COPY } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { COPY, HINTS } from "@/lib/copy/ui";
 import { getIndexLabel } from "@/lib/finance/index";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,7 +14,10 @@ export function FinancialIndexGauge({ index }: FinancialIndexGaugeProps) {
     return (
       <Card className="flex flex-col items-center">
         <CardHeader className="text-center w-full">
-          <CardTitle>{COPY.moneyScore}</CardTitle>
+          <CardTitle className="flex items-center justify-center gap-1">
+            {COPY.moneyScore}
+            <HintTooltip hint={HINTS.financialHealth} />
+          </CardTitle>
           <CardDescription>{COPY.moneyScoreHint}</CardDescription>
         </CardHeader>
         <div className="flex flex-1 items-center justify-center py-12 px-4 text-center">
@@ -30,7 +34,10 @@ export function FinancialIndexGauge({ index }: FinancialIndexGaugeProps) {
   return (
     <Card className="flex flex-col items-center">
       <CardHeader className="text-center w-full">
-        <CardTitle>{COPY.moneyScore}</CardTitle>
+        <CardTitle className="flex items-center justify-center gap-1">
+          {COPY.moneyScore}
+          <HintTooltip hint={HINTS.financialHealth} />
+        </CardTitle>
         <CardDescription>{COPY.moneyScoreHint}</CardDescription>
       </CardHeader>
       <div className="relative my-4">

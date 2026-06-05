@@ -1,6 +1,7 @@
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { trackServerEvent } from "@/lib/analytics/track-server";
 import { getAnalysisContext } from "@/lib/actions/finance";
+import { markOnboardingStep } from "@/lib/actions/onboarding";
 import {
   computeIndexDelta,
   generateComparisonComment,
@@ -234,6 +235,8 @@ export async function POST(_req: Request) {
       saved.id,
       parsed
     );
+
+    await markOnboardingStep("analysis");
 
     revalidatePath("/history");
     revalidatePath("/actions");

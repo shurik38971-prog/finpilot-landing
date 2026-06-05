@@ -9,6 +9,7 @@ import {
   FlaskConical,
   LayoutDashboard,
   LogOut,
+  CircleHelp,
   History,
   Sparkles,
   Target,
@@ -35,6 +36,7 @@ const navItems = [
   { href: "/analyze", label: "ИИ-анализ", icon: Sparkles },
   { href: "/history", label: "История", icon: History },
   { href: "/goals", label: "Цели", icon: Target },
+  { href: "/faq", label: "FAQ", icon: CircleHelp },
 ];
 
 interface SidebarProps {

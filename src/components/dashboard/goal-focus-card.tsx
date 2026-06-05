@@ -2,7 +2,8 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
-import { benefitLabel } from "@/lib/copy/ui";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { benefitLabel, HINTS } from "@/lib/copy/ui";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
 import type { PrimaryGoalFocus } from "@/types/tasks";
 import { TaskImpactPreview } from "@/components/tasks/task-impact-preview";
@@ -26,7 +27,8 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4 text-accent" />
-            Главная цель
+            Цель
+            <HintTooltip hint={HINTS.goal} />
           </CardTitle>
           <CardDescription>
             Задайте цель и запустите ИИ-разбор — FinPilot свяжет дела с путём
@@ -59,7 +61,10 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
             </p>
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4 text-accent" />
-              {goal.title}
+              <span>Цель</span>
+              <HintTooltip hint={HINTS.goal} />
+              <span className="text-muted font-normal">·</span>
+              <span className="truncate">{goal.title}</span>
             </CardTitle>
           </div>
           <Badge variant="default">{progressPercent}%</Badge>

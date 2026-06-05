@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { forecastCashFlow } from "@/lib/finance/forecast";
 import { calculateDebtPayoff } from "@/lib/finance/debt-strategies";
 import { computeDashboardSummary } from "@/lib/finance/index";
+import {
+  markOnboardingStep,
+  markOnboardingSteps,
+} from "@/lib/actions/onboarding";
 import { revalidatePath } from "next/cache";
 import type { Frequency } from "@/types/database";
 
@@ -62,6 +66,7 @@ export async function createIncome(formData: FormData) {
     frequency: isRecurring ? (formData.get("frequency") as Frequency) : null,
   });
   if (error) throw error;
+  await markOnboardingStep("income");
   revalidateFinancialPages();
 }
 
@@ -117,6 +122,7 @@ export async function createExpense(formData: FormData) {
     is_essential: formData.get("is_essential") === "on",
   });
   if (error) throw error;
+  await markOnboardingStep("expenses");
   revalidateFinancialPages();
 }
 
@@ -172,6 +178,7 @@ export async function createDebt(formData: FormData) {
     priority: Number(formData.get("priority") || 0),
   });
   if (error) throw error;
+  await markOnboardingStep("debts");
   revalidateFinancialPages();
 }
 
@@ -293,5 +300,6 @@ export async function seedDemoData(replace = false) {
   );
   if (debtError) throw debtError;
 
+  await markOnboardingSteps(["income", "expenses", "debts"]);
   revalidateFinancialPages();
 }

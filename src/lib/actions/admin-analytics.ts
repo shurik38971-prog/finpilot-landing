@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdminEmail } from "@/lib/admin/is-admin";
+import { isAdminUser } from "@/lib/admin/is-admin";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AdminAnalyticsDashboard {
@@ -44,7 +44,7 @@ async function requireAdmin() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user?.email || !isAdminEmail(user.email)) {
+  if (!user?.email || !(await isAdminUser(supabase, user.email))) {
     throw new Error("Forbidden");
   }
 

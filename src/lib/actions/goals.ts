@@ -1,5 +1,6 @@
 "use server";
 
+import { markOnboardingStep } from "@/lib/actions/onboarding";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { FinancialGoal, GoalType } from "@/types/goals";
@@ -58,6 +59,7 @@ export async function createGoal(formData: FormData) {
   });
 
   if (error) throw error;
+  await markOnboardingStep("goal");
   revalidatePath("/goals");
   revalidatePath("/dashboard");
   revalidatePath("/actions");
