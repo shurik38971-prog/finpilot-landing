@@ -1,34 +1,13 @@
 import { getAnalysisContext } from "@/lib/actions/finance";
+import {
+  computeIndexDelta,
+  generateComparisonComment,
+} from "@/lib/ai/generate-comparison";
+import { getGptunnelConfig, gptunnelChat } from "@/lib/ai/gptunnel";
 import { createClient } from "@/lib/supabase/server";
-import type { AiAnalysisResult } from "@/types/analysis";
+import { revalidatePath } from "next/cache";
+import type { AiAnalysisResult, AnalysisRecord } from "@/types/analysis";
 import { NextResponse } from "next/server";
-
-function getGptunnelConfig():
-  | { ok: true; apiKey: string; baseUrl: string; model: string }
-  | { ok: false; error: string } {
-  const apiKey = process.env.GPTUNNEL_API_KEY;
-  const baseUrl = process.env.GPTUNNEL_BASE_URL;
-  const model = process.env.GPTUNNEL_MODEL;
-
-  if (!apiKey) {
-    return { ok: false, error: "GPTUNNEL_API_KEY не настроен" };
-  }
-
-  if (!baseUrl) {
-    return { ok: false, error: "GPTUNNEL_BASE_URL не настроен" };
-  }
-
-  if (!model) {
-    return { ok: false, error: "GPTUNNEL_MODEL не настроен" };
-  }
-
-  return {
-    ok: true,
-    apiKey,
-    baseUrl: baseUrl.replace(/\/$/, ""),
-    model,
-  };
-}
 
 function extractJsonFromText(text: string) {
   const cleaned = text
@@ -99,27 +78,18 @@ export async function POST(_req: Request) {
     }
 
     const config = getGptunnelConfig();
-
     if (!config.ok) {
       return NextResponse.json({ error: config.error }, { status: 500 });
     }
 
     const context = await getAnalysisContext();
     const prompt = buildAnalysisPrompt(context);
-    const apiUrl = `${config.baseUrl}/chat/completions`;
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          {
-            role: "system",
-            content: `Ты не консультант. Ты финансовый директор самозанятого с нестабильным доходом и долгами.
+    const chatResult = await gptunnelChat(
+      [
+        {
+          role: "system",
+          content: `Ты не консультант. Ты финансовый директор самозанятого с нестабильным доходом и долгами.
 Твоя задача:
 - найти главную угрозу;
 - найти утечки денег;
@@ -130,58 +100,79 @@ export async function POST(_req: Request) {
 Если финансовое положение хорошее — объясни почему.
 Если плохое — не смягчай формулировки.
 Отвечай только валидным JSON без markdown.`,
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
-      }),
-    });
+        },
+        { role: "user", content: prompt },
+      ],
+      0.3
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      console.error("GPTunnel error:", response.status, errorText);
-
+    if (!chatResult.ok) {
+      console.error("GPTunnel error:", chatResult.status, chatResult.details);
       return NextResponse.json(
         {
-          error: "Ошибка GPTunnel API",
-          status: response.status,
-          details: errorText,
+          error: chatResult.error,
+          status: chatResult.status,
+          details: chatResult.details,
         },
-        { status: response.status }
+        { status: chatResult.status ?? 500 }
       );
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      return NextResponse.json(
-        { error: "Пустой ответ от ИИ", raw: data },
-        { status: 500 }
-      );
-    }
-
-    const parsed = extractJsonFromText(content) as AiAnalysisResult;
-    console.log("Model used:", config.model);
+    const parsed = extractJsonFromText(chatResult.content) as AiAnalysisResult;
+    console.log("Model used:", chatResult.model);
 
     const mainProblem =
       parsed.main_threat?.trim() || parsed.summary?.trim() || "Не определена";
 
-    const { error: saveError } = await supabase.from("analyses").insert({
-      user_id: user.id,
-      financial_index: context.financialIndex,
-      main_problem: mainProblem,
-      recommendations: parsed,
-      model_used: config.model,
-    });
+    const { data: previousAnalysis } = await supabase
+      .from("analyses")
+      .select(
+        "id, user_id, financial_index, main_problem, recommendations, model_used, index_delta, comparison_comment, created_at"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const indexDelta = previousAnalysis
+      ? computeIndexDelta(
+          context.financialIndex,
+          previousAnalysis.financial_index
+        )
+      : null;
+
+    let comparisonComment: string | null = null;
+
+    const { data: saved, error: saveError } = await supabase
+      .from("analyses")
+      .insert({
+        user_id: user.id,
+        financial_index: context.financialIndex,
+        main_problem: mainProblem,
+        recommendations: parsed,
+        model_used: chatResult.model,
+        index_delta: indexDelta,
+      })
+      .select(
+        "id, user_id, financial_index, main_problem, recommendations, model_used, index_delta, comparison_comment, created_at"
+      )
+      .single();
 
     if (saveError) {
       console.error("Failed to save analysis:", saveError);
+    } else if (previousAnalysis && saved) {
+      comparisonComment = await generateComparisonComment(
+        saved as AnalysisRecord,
+        previousAnalysis as AnalysisRecord
+      );
+
+      await supabase
+        .from("analyses")
+        .update({ comparison_comment: comparisonComment })
+        .eq("id", saved.id);
     }
+
+    revalidatePath("/history");
 
     return NextResponse.json(parsed);
   } catch (error) {

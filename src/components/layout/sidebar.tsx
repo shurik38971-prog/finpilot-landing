@@ -7,6 +7,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  History,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/crisis", label: "Антикризис", icon: AlertTriangle },
   { href: "/scenarios", label: "Сценарии", icon: Zap },
   { href: "/analyze", label: "ИИ-анализ", icon: Sparkles },
+  { href: "/history", label: "История", icon: History },
 ];
 
 interface SidebarProps {

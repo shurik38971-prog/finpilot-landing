@@ -31,5 +31,14 @@ export interface AnalysisRecord {
   main_problem: string;
   recommendations: AiAnalysisResult;
   model_used: string | null;
+  index_delta: number | null;
+  comparison_comment: string | null;
   created_at: string;
+}
+
+export interface AnalysisComparison {
+  current: AnalysisRecord;
+  previous: AnalysisRecord;
+  indexDelta: number | null;
+  comment: string | null;
 }

@@ -15,6 +15,7 @@ const FINANCIAL_PATHS = [
   "/crisis",
   "/scenarios",
   "/analyze",
+  "/history",
 ] as const;
 
 function revalidateFinancialPages() {
