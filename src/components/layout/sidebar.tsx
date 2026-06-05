@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   AlertTriangle,
   BarChart3,
+  CheckCircle2,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/debts", label: "Долги", icon: CreditCard },
   { href: "/crisis", label: "Антикризис", icon: AlertTriangle },
   { href: "/scenarios", label: "Сценарии", icon: Zap },
+  { href: "/actions", label: "Что делать", icon: CheckCircle2 },
   { href: "/analyze", label: "ИИ-анализ", icon: Sparkles },
   { href: "/history", label: "История", icon: History },
   { href: "/goals", label: "Цели", icon: Target },

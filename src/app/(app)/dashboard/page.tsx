@@ -2,16 +2,21 @@ import { CashFlowChart } from "@/components/dashboard/cash-flow-chart";
 import { DashboardAutoRefresh } from "@/components/dashboard/dashboard-auto-refresh";
 import { DemoDataBanner } from "@/components/dashboard/demo-data-banner";
 import { FinancialIndexGauge } from "@/components/dashboard/financial-index-gauge";
+import { PrimaryActionCard } from "@/components/dashboard/primary-action-card";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PageHeader } from "@/components/layout/page-header";
 import { getFinancialData } from "@/lib/actions/finance";
+import { getTopPendingTask } from "@/lib/actions/tasks";
 import { computeDashboardSummary } from "@/lib/finance/index";
 import { forecastCashFlow } from "@/lib/finance/forecast";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const { incomes, expenses, debts } = await getFinancialData();
+  const [{ incomes, expenses, debts }, topTask] = await Promise.all([
+    getFinancialData(),
+    getTopPendingTask(),
+  ]);
 
   const {
     totalIncome,
@@ -34,6 +39,7 @@ export default async function DashboardPage() {
 
         <div className="space-y-6">
           <DemoDataBanner isEmpty={isEmpty} />
+          <PrimaryActionCard task={topTask} />
           <SummaryCards
             totalIncome={totalIncome}
             totalExpenses={totalExpenses}

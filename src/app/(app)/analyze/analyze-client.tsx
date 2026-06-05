@@ -10,12 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type {
-  AiAnalysisResult,
+  AnalysisApiResponse,
   AnalysisLevel,
   AnalysisPlanItem,
   HealthStatus,
 } from "@/types/analysis";
-import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 const levelLabels: Record<AnalysisLevel, string> = {
@@ -76,13 +77,15 @@ function PlanList({
 
 export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AiAnalysisResult | null>(null);
+  const [result, setResult] = useState<AnalysisApiResponse | null>(null);
+  const [tasksCreated, setTasksCreated] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   async function handleAnalyze() {
     setLoading(true);
     setError("");
     setResult(null);
+    setTasksCreated(null);
 
     try {
       const res = await fetch("/api/analyze", { method: "POST" });
@@ -93,7 +96,11 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
         return;
       }
 
-      setResult(data);
+      const { tasks_created, ...analysis } = data as AnalysisApiResponse & {
+        tasks_created?: number;
+      };
+      setResult(analysis);
+      setTasksCreated(tasks_created ?? 0);
     } catch {
       setError("Не удалось выполнить анализ");
     } finally {
@@ -150,6 +157,31 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
 
       {result && (
         <div className="space-y-6">
+          <Card className="border-emerald-500/30 bg-emerald-500/5">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2 text-emerald-400">
+                <CheckCircle2 className="h-4 w-4" />
+                Анализ готов
+                {tasksCreated !== null && tasksCreated > 0
+                  ? `. Создано задач: ${tasksCreated}`
+                  : ""}
+              </CardTitle>
+              <CardDescription>
+                {tasksCreated && tasksCreated > 0
+                  ? "Финансовые задачи добавлены в Action Engine."
+                  : "Новые задачи не созданы — возможно, похожие уже активны."}
+              </CardDescription>
+            </CardHeader>
+            <div className="px-5 pb-5">
+              <Link
+                href="/actions"
+                className="text-sm text-accent hover:underline"
+              >
+                Перейти к действиям →
+              </Link>
+            </div>
+          </Card>
+
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
@@ -216,6 +248,31 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
                 )}
               </div>
             </Card>
+          )}
+
+          {(result.debt_recommendation || result.cashflow_forecast_comment) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {result.debt_recommendation && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Долги</CardTitle>
+                  </CardHeader>
+                  <p className="px-5 pb-5 text-sm leading-relaxed">
+                    {result.debt_recommendation}
+                  </p>
+                </Card>
+              )}
+              {result.cashflow_forecast_comment && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Денежный поток</CardTitle>
+                  </CardHeader>
+                  <p className="px-5 pb-5 text-sm leading-relaxed">
+                    {result.cashflow_forecast_comment}
+                  </p>
+                </Card>
+              )}
+            </div>
           )}
 
           <div className="grid grid-cols-1 gap-6">

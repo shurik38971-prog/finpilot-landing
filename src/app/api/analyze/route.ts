@@ -3,6 +3,7 @@ import {
   computeIndexDelta,
   generateComparisonComment,
 } from "@/lib/ai/generate-comparison";
+import { createTasksFromAnalysis } from "@/lib/ai/create-tasks-from-analysis";
 import { getGptunnelConfig, gptunnelChat } from "@/lib/ai/gptunnel";
 import { PROBLEM_LABELS, resolveProblemLabel } from "@/lib/finance/problem-labels";
 import { createClient } from "@/lib/supabase/server";
@@ -48,24 +49,36 @@ ${JSON.stringify(context, null, 2)}
   "health_explanation": "если положение хорошее — объясни почему; если плохое — прямо и без смягчения",
   "main_problem_label": "короткая метка из списка: ${labels}",
   "main_threat": "развёрнутое описание главной угрозы (2-3 предложения)",
+  "main_problem": "краткая формулировка главной проблемы",
   "money_leaks": ["утечка денег 1", "утечка денег 2"],
   "cash_gap_risk": {
     "level": "high | medium | low",
     "description": "риск кассового разрыва и его причины",
     "months_until_gap": 0
   },
-  "plan_7_days": [
-    { "action": "конкретное действие", "why": "зачем это срочно" }
+  "risks": [
+    { "level": "high | medium | low", "title": "название риска", "description": "описание" }
   ],
-  "plan_30_days": [
-    { "action": "конкретное действие", "why": "ожидаемый эффект" }
+  "plan_7_days": [{ "action": "конкретное действие", "why": "зачем это срочно" }],
+  "plan_30_days": [{ "action": "конкретное действие", "why": "ожидаемый эффект" }],
+  "plan_90_days": [{ "action": "конкретное действие", "why": "стратегический эффект" }],
+  "actions_30_days": [
+    { "priority": "high | medium | low", "action": "конкретное действие", "effect": "ожидаемый эффект" }
   ],
-  "plan_90_days": [
-    { "action": "конкретное действие", "why": "стратегический эффект" }
-  ]
+  "next_best_action": {
+    "title": "одно главное действие на ближайшие дни",
+    "description": "почему именно оно",
+    "impact_score": 85,
+    "impact_label": "высокий эффект",
+    "due_days": 7
+  },
+  "debt_recommendation": "что делать с долгами",
+  "cashflow_forecast_comment": "комментарий по денежному потоку"
 }
 
-main_problem_label — строго короткая фраза для таблицы (до 5 слов).
+impact_label: "низкий эффект" | "средний эффект" | "высокий эффект"
+actions_30_days — до 4 конкретных шагов на 30 дней.
+next_best_action — самое важное действие прямо сейчас.
 Не добавляй markdown. Верни только JSON.
 `;
 }
@@ -103,11 +116,10 @@ export async function POST(_req: Request) {
 - найти главную угрозу;
 - найти утечки денег;
 - определить риск кассового разрыва;
-- дать план на 7 дней;
-- дать план на 30 дней;
-- дать план на 90 дней.
-Если финансовое положение хорошее — объясни почему.
-Если плохое — не смягчай формулировки.
+- дать план на 7, 30 и 90 дней;
+- выбрать next_best_action — одно главное действие;
+- дать actions_30_days — конкретные шаги с эффектом.
+Если положение хорошее — объясни почему. Если плохое — не смягчай.
 Отвечай только валидным JSON без markdown.`,
         },
         { role: "user", content: buildAnalysisPrompt(context) },
@@ -131,12 +143,18 @@ export async function POST(_req: Request) {
     console.log("Model used:", chatResult.model);
 
     const mainThreat =
-      parsed.main_threat?.trim() || parsed.summary?.trim() || "Не определена";
+      parsed.main_threat?.trim() ||
+      parsed.main_problem?.trim() ||
+      parsed.summary?.trim() ||
+      "Не определена";
     const mainProblemShort = resolveProblemLabel(
       parsed.main_problem_label,
       mainThreat
     );
-    const nextStep = parsed.plan_7_days?.[0]?.action?.trim() ?? null;
+    const nextStep =
+      parsed.next_best_action?.title?.trim() ??
+      parsed.plan_7_days?.[0]?.action?.trim() ??
+      null;
 
     await supabase
       .from("analyses")
@@ -173,26 +191,46 @@ export async function POST(_req: Request) {
         model_used: chatResult.model,
         index_delta: indexDelta,
       })
-      .select(ANALYSIS_SELECT)
+      .select("id")
       .single();
 
-    if (saveError) {
+    if (saveError || !saved) {
       console.error("Failed to save analysis:", saveError);
-    } else if (previousAnalysis && saved) {
-      const comparisonComment = await generateComparisonComment(
-        saved as AnalysisRecord,
-        previousAnalysis as AnalysisRecord
-      );
-
-      await supabase
-        .from("analyses")
-        .update({ comparison_comment: comparisonComment })
-        .eq("id", saved.id);
+      return NextResponse.json(parsed);
     }
 
-    revalidatePath("/history");
+    if (previousAnalysis) {
+      const fullSaved = await supabase
+        .from("analyses")
+        .select(ANALYSIS_SELECT)
+        .eq("id", saved.id)
+        .single();
 
-    return NextResponse.json(parsed);
+      if (fullSaved.data) {
+        const comparisonComment = await generateComparisonComment(
+          fullSaved.data as AnalysisRecord,
+          previousAnalysis as AnalysisRecord
+        );
+
+        await supabase
+          .from("analyses")
+          .update({ comparison_comment: comparisonComment })
+          .eq("id", saved.id);
+      }
+    }
+
+    const tasksCreated = await createTasksFromAnalysis(
+      supabase,
+      user.id,
+      saved.id,
+      parsed
+    );
+
+    revalidatePath("/history");
+    revalidatePath("/actions");
+    revalidatePath("/dashboard");
+
+    return NextResponse.json({ ...parsed, tasks_created: tasksCreated });
   } catch (error) {
     console.error("Analyze error:", error);
 

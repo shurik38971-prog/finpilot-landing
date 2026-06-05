@@ -1,0 +1,286 @@
+"use client";
+
+import {
+  completeTask,
+  deleteTask,
+  postponeTask,
+} from "@/lib/actions/tasks";
+import { PageHeader } from "@/components/layout/page-header";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn, formatHistoryDate } from "@/lib/utils";
+import type { FinancialTask } from "@/types/tasks";
+import { TASK_STATUS_LABELS } from "@/types/tasks";
+import {
+  CheckCircle2,
+  Clock,
+  Loader2,
+  Target,
+  Trash2,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+function impactVariant(score: number): "danger" | "warning" | "success" | "default" {
+  if (score >= 70) return "danger";
+  if (score >= 45) return "warning";
+  return "default";
+}
+
+function statusVariant(
+  status: FinancialTask["status"]
+): "success" | "warning" | "default" {
+  if (status === "done") return "success";
+  if (status === "postponed") return "warning";
+  return "default";
+}
+
+function PrimaryActionCard({
+  task,
+  loadingId,
+  onComplete,
+}: {
+  task: FinancialTask;
+  loadingId: string | null;
+  onComplete: (id: string) => void;
+}) {
+  return (
+    <Card className="border-accent/40 bg-accent/5 mb-6">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted mb-1">Главное действие месяца</p>
+            <CardTitle className="text-lg">{task.title}</CardTitle>
+          </div>
+          <Badge variant={impactVariant(task.impact_score)}>
+            {task.impact_label ?? `${task.impact_score}`}
+          </Badge>
+        </div>
+        {task.description && (
+          <CardDescription className="text-sm leading-relaxed">
+            {task.description}
+          </CardDescription>
+        )}
+      </CardHeader>
+      <div className="px-5 pb-5 flex flex-wrap items-center gap-3">
+        <span className="text-xs text-muted">
+          Эффект: {task.impact_score}/100
+        </span>
+        {task.due_date && (
+          <span className="text-xs text-muted flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            до {formatHistoryDate(task.due_date)}
+          </span>
+        )}
+        <Button
+          size="sm"
+          disabled={loadingId === task.id}
+          onClick={() => onComplete(task.id)}
+        >
+          {loadingId === task.id ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+          Выполнено
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function TaskRow({
+  task,
+  loadingId,
+  onComplete,
+  onPostpone,
+  onDelete,
+}: {
+  task: FinancialTask;
+  loadingId: string | null;
+  onComplete: (id: string) => void;
+  onPostpone: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const isDone = task.status === "done";
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-start gap-3 p-4 border-b border-border/50 last:border-0",
+        isDone && "opacity-70"
+      )}
+    >
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p
+            className={cn(
+              "font-medium text-sm",
+              isDone && "line-through text-muted"
+            )}
+          >
+            {task.title}
+          </p>
+          <Badge variant={statusVariant(task.status)}>
+            {TASK_STATUS_LABELS[task.status]}
+          </Badge>
+          {!isDone && (
+            <Badge variant={impactVariant(task.impact_score)}>
+              {task.impact_label ?? task.impact_score}
+            </Badge>
+          )}
+        </div>
+        {task.description && (
+          <p className="text-sm text-muted leading-relaxed">{task.description}</p>
+        )}
+        <p className="text-xs text-muted">
+          {formatHistoryDate(task.created_at.split("T")[0])}
+          {task.due_date && ` · срок ${formatHistoryDate(task.due_date)}`}
+        </p>
+      </div>
+      {!isDone && (
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            size="sm"
+            disabled={loadingId === task.id}
+            onClick={() => onComplete(task.id)}
+          >
+            {loadingId === task.id ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "Выполнено"
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={loadingId === task.id}
+            onClick={() => onPostpone(task.id)}
+          >
+            Отложить
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={loadingId === task.id}
+            onClick={() => onDelete(task.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface ActionsPageClientProps {
+  tasks: FinancialTask[];
+}
+
+export function ActionsPageClient({ tasks }: ActionsPageClientProps) {
+  const router = useRouter();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const pending = tasks.filter((t) => t.status === "pending");
+  const postponed = tasks.filter((t) => t.status === "postponed");
+  const done = tasks.filter((t) => t.status === "done");
+  const primary = pending[0] ?? null;
+  const activeTasks = pending.slice(primary ? 1 : 0).concat(postponed);
+
+  async function runAction(id: string, action: (id: string) => Promise<void>) {
+    setLoadingId(id);
+    try {
+      await action(id);
+      router.refresh();
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Что делать сейчас"
+        description="Конкретные шаги из ИИ-анализа — от главного действия к плану на месяц"
+      />
+
+      {tasks.length === 0 ? (
+        <Card>
+          <div className="flex flex-col items-center py-16 text-center px-6">
+            <div className="rounded-full bg-surface-hover p-4 mb-4">
+              <Target className="h-8 w-8 text-muted" />
+            </div>
+            <h3 className="text-lg font-medium mb-1">Задач пока нет</h3>
+            <p className="text-sm text-muted max-w-sm mb-4">
+              Запустите ИИ-анализ — FinPilot создаст персональный список
+              финансовых действий.
+            </p>
+            <Link href="/analyze">
+              <Button>Запустить ИИ-анализ</Button>
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {primary && (
+            <PrimaryActionCard
+              task={primary}
+              loadingId={loadingId}
+              onComplete={(id) => runAction(id, completeTask)}
+            />
+          )}
+
+          {activeTasks.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Активные задачи</CardTitle>
+              </CardHeader>
+              <div>
+                {activeTasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    loadingId={loadingId}
+                    onComplete={(id) => runAction(id, completeTask)}
+                    onPostpone={(id) => runAction(id, postponeTask)}
+                    onDelete={(id) => {
+                      if (!confirm("Удалить задачу?")) return;
+                      runAction(id, deleteTask);
+                    }}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {done.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base text-emerald-400">
+                  Выполненные задачи
+                </CardTitle>
+              </CardHeader>
+              <div>
+                {done.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    loadingId={loadingId}
+                    onComplete={() => {}}
+                    onPostpone={() => {}}
+                    onDelete={(id) => {
+                      if (!confirm("Удалить задачу?")) return;
+                      runAction(id, deleteTask);
+                    }}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

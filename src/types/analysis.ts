@@ -6,6 +6,20 @@ export interface AnalysisPlanItem {
   why: string;
 }
 
+export interface AiAction30Day {
+  priority: AnalysisLevel;
+  action: string;
+  effect: string;
+}
+
+export interface NextBestAction {
+  title: string;
+  description: string;
+  impact_score: number;
+  impact_label: string;
+  due_days: number;
+}
+
 export interface CashGapRisk {
   level: AnalysisLevel;
   description: string;
@@ -18,11 +32,21 @@ export interface AiAnalysisResult {
   health_explanation: string;
   main_problem_label: string;
   main_threat: string;
+  main_problem?: string;
   money_leaks: string[];
   cash_gap_risk: CashGapRisk;
   plan_7_days: AnalysisPlanItem[];
   plan_30_days: AnalysisPlanItem[];
   plan_90_days: AnalysisPlanItem[];
+  actions_30_days?: AiAction30Day[];
+  next_best_action?: NextBestAction;
+  debt_recommendation?: string;
+  cashflow_forecast_comment?: string;
+  risks?: { level: AnalysisLevel; title: string; description: string }[];
+}
+
+export interface AnalysisApiResponse extends AiAnalysisResult {
+  tasks_created?: number;
 }
 
 export interface AnalysisRecord {
