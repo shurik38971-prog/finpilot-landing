@@ -71,7 +71,9 @@ function PrimaryActionCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-muted mb-1">Главное действие месяца</p>
+            <p className="text-xs text-muted mb-1">
+              Следующее лучшее действие · приоритет {task.priority_score}/100
+            </p>
             <CardTitle className="text-lg">{task.title}</CardTitle>
             <div className="mt-2">
               <GoalBadge task={task} />
@@ -213,7 +215,13 @@ export function ActionsPageClient({ tasks }: ActionsPageClientProps) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const pending = tasks.filter((t) => t.status === "pending");
+  const pending = tasks
+    .filter((t) => t.status === "pending")
+    .sort(
+      (a, b) =>
+        b.priority_score - a.priority_score ||
+        b.impact_score - a.impact_score
+    );
   const postponed = tasks.filter((t) => t.status === "postponed");
   const done = tasks.filter((t) => t.status === "done");
   const primary = pending[0] ?? null;

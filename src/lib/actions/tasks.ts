@@ -1,14 +1,20 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { syncPendingTaskPriorities } from "@/lib/ai/sync-task-priorities";
 import { applyGoalProgressOnTaskComplete } from "@/lib/finance/goal-progress";
 import { pickPrimaryGoal } from "@/lib/finance/match-task-to-goal";
+import {
+  buildTaskMotivation,
+  calculateTaskPriority,
+} from "@/lib/services/task-priority";
 import { revalidatePath } from "next/cache";
 import type { FinancialGoal } from "@/types/goals";
 import type { TaskImpact } from "@/types/task-impact";
 import type {
   FinancialTask,
   FinancialTaskWithGoal,
+  NextBestActionResult,
   PrimaryGoalFocus,
 } from "@/types/tasks";
 
@@ -63,6 +69,7 @@ export async function getFinancialTasks(): Promise<FinancialTaskWithGoal[]> {
     .from("financial_tasks")
     .select(TASK_SELECT)
     .eq("user_id", userId)
+    .order("priority_score", { ascending: false })
     .order("impact_score", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -71,19 +78,68 @@ export async function getFinancialTasks(): Promise<FinancialTaskWithGoal[]> {
 }
 
 export async function getTopPendingTask(): Promise<FinancialTaskWithGoal | null> {
+  const next = await getNextBestAction();
+  if (!next) return null;
+
+  const tasks = await getFinancialTasks();
+  return tasks.find((t) => t.id === next.id) ?? null;
+}
+
+function toNextBestActionResult(
+  task: FinancialTaskWithGoal,
+  options?: { hasNegativeCashflow?: boolean }
+): NextBestActionResult {
+  const { reasons } = calculateTaskPriority(
+    {
+      title: task.title,
+      description: task.description,
+      impact_score: task.impact_score,
+      impact_label: task.impact_label,
+      due_date: task.due_date,
+      goal_id: task.goal_id,
+      goal_type: task.goal?.type ?? null,
+    },
+    { hasNegativeCashflow: options?.hasNegativeCashflow, impact: task.impact }
+  );
+
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    impact_score: task.impact_score,
+    priority_score: task.priority_score,
+    financial_impact: task.financial_impact,
+    due_date: task.due_date,
+    goal: task.goal,
+    impact: task.impact,
+    reasons,
+    motivation: buildTaskMotivation(task.impact),
+  };
+}
+
+export async function getNextBestAction(
+  options?: { hasNegativeCashflow?: boolean }
+): Promise<NextBestActionResult | null> {
   const { supabase, userId } = await getUserId();
+
+  await syncPendingTaskPriorities(supabase, userId, options);
+
   const { data, error } = await supabase
     .from("financial_tasks")
     .select(TASK_SELECT)
     .eq("user_id", userId)
     .eq("status", "pending")
+    .order("priority_score", { ascending: false })
     .order("impact_score", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (error) throw error;
-  return data ? mapTask(data as Record<string, unknown>) : null;
+  if (!data) return null;
+
+  const task = mapTask(data as Record<string, unknown>);
+  return toNextBestActionResult(task, options);
 }
 
 export async function getTasksByGoalId(
@@ -118,6 +174,7 @@ export async function getPrimaryGoalFocus(): Promise<PrimaryGoalFocus | null> {
     .eq("user_id", userId)
     .eq("status", "pending")
     .eq("goal_id", primary.id)
+    .order("priority_score", { ascending: false })
     .order("impact_score", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(1)
@@ -131,6 +188,7 @@ export async function getPrimaryGoalFocus(): Promise<PrimaryGoalFocus | null> {
       .select(TASK_SELECT)
       .eq("user_id", userId)
       .eq("status", "pending")
+      .order("priority_score", { ascending: false })
       .order("impact_score", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(1)
@@ -198,6 +256,7 @@ export async function completeTask(id: string) {
     }
   }
 
+  await syncPendingTaskPriorities(supabase, userId);
   revalidateTaskPages();
 }
 

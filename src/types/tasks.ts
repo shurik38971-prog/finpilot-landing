@@ -13,6 +13,8 @@ export interface FinancialTask {
   description: string | null;
   impact_score: number;
   impact_label: string | null;
+  priority_score: number;
+  financial_impact: number;
   status: TaskStatus;
   due_date: string | null;
   created_at: string;
@@ -41,4 +43,25 @@ export interface PrimaryGoalFocus {
   remaining: number;
   progressPercent: number;
   taskImpact: TaskImpact | null;
+}
+
+export interface NextBestActionMotivation {
+  indexFrom: number | null;
+  indexTo: number | null;
+  goalMonthsFaster: number | null;
+  monthlySavings: number | null;
+}
+
+export interface NextBestActionResult {
+  id: string;
+  title: string;
+  description: string | null;
+  impact_score: number;
+  priority_score: number;
+  financial_impact: number;
+  due_date: string | null;
+  goal: FinancialTaskGoal | null;
+  impact: TaskImpact | null;
+  reasons: string[];
+  motivation: NextBestActionMotivation;
 }

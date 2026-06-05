@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createTaskImpacts } from "@/lib/ai/create-task-impacts";
+import { syncPendingTaskPriorities } from "@/lib/ai/sync-task-priorities";
+import { computeDashboardSummary } from "@/lib/finance/index";
 import { matchTaskToGoal } from "@/lib/finance/match-task-to-goal";
 import type { Debt, Expense, Income } from "@/types/database";
 import type {
@@ -197,6 +199,15 @@ export async function createTasksFromAnalysis(
     expenses: (expenses ?? []) as Expense[],
     debts: (debts ?? []) as Debt[],
     goals: userGoals,
+  });
+
+  const summary = computeDashboardSummary(
+    (incomes ?? []) as Income[],
+    (expenses ?? []) as Expense[],
+    (debts ?? []) as Debt[]
+  );
+  await syncPendingTaskPriorities(supabase, userId, {
+    hasNegativeCashflow: summary.netCashFlow < 0,
   });
 
   return inserted?.length ?? 0;

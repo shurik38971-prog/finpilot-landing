@@ -3,10 +3,11 @@ import { DashboardAutoRefresh } from "@/components/dashboard/dashboard-auto-refr
 import { DemoDataBanner } from "@/components/dashboard/demo-data-banner";
 import { FinancialIndexGauge } from "@/components/dashboard/financial-index-gauge";
 import { GoalFocusCard } from "@/components/dashboard/goal-focus-card";
+import { NextBestActionCard } from "@/components/dashboard/next-best-action-card";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { PageHeader } from "@/components/layout/page-header";
 import { getFinancialData } from "@/lib/actions/finance";
-import { getPrimaryGoalFocus } from "@/lib/actions/tasks";
+import { getNextBestAction, getPrimaryGoalFocus } from "@/lib/actions/tasks";
 import { computeDashboardSummary } from "@/lib/finance/index";
 import { forecastCashFlow } from "@/lib/finance/forecast";
 
@@ -25,6 +26,10 @@ export default async function DashboardPage() {
     totalDebt,
     financialIndex,
   } = computeDashboardSummary(incomes, expenses, debts);
+
+  const nextBestAction = await getNextBestAction({
+    hasNegativeCashflow: netCashFlow < 0,
+  });
   const forecast = forecastCashFlow(incomes, expenses, debts);
   const isEmpty =
     incomes.length === 0 && expenses.length === 0 && debts.length === 0;
@@ -39,6 +44,7 @@ export default async function DashboardPage() {
 
         <div className="space-y-6">
           <DemoDataBanner isEmpty={isEmpty} />
+          <NextBestActionCard action={nextBestAction} />
           <GoalFocusCard focus={goalFocus} />
           <SummaryCards
             totalIncome={totalIncome}
