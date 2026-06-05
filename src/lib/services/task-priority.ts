@@ -86,10 +86,10 @@ export function calculateTaskPriority(
   const tier = effectTier(task);
   if (tier === "high") {
     score += 40;
-    reasons.push("высокий ожидаемый финансовый эффект");
+    reasons.push("сильно повлияет на ваши деньги");
   } else if (tier === "medium") {
     score += 20;
-    reasons.push("средний ожидаемый финансовый эффект");
+    reasons.push("заметно повлияет на ваши деньги");
   } else {
     score += 10;
   }
@@ -98,14 +98,14 @@ export function calculateTaskPriority(
     containsAny(text, DEBT_KEYWORDS) || task.goal_type === "debt_payoff";
   if (debtRelated) {
     score += 30;
-    reasons.push("влияет на долговую нагрузку");
+    reasons.push("помогает меньше платить по долгам");
   }
 
   const cashGapRelated =
     containsAny(text, CASH_GAP_KEYWORDS) || options?.hasNegativeCashflow;
   if (cashGapRelated) {
     score += 30;
-    reasons.push("связано с кассовым разрывом или ликвидностью");
+    reasons.push("срочно, если денег не хватает до следующего дохода");
   }
 
   const cushionRelated =
@@ -116,7 +116,7 @@ export function calculateTaskPriority(
   }
 
   if (task.goal_id && !debtRelated && !cushionRelated) {
-    reasons.push("ускоряет достижение финансовой цели");
+    reasons.push("быстрее приблизит к вашей цели");
     score += 10;
   }
 
@@ -133,8 +133,8 @@ export function calculateTaskPriority(
     Number(options.impact.projected_cashflow) >
       Number(options.impact.current_cashflow)
   ) {
-    if (!reasons.some((r) => r.includes("денежн") || r.includes("поток"))) {
-      reasons.push("улучшает денежный поток");
+    if (!reasons.some((r) => r.includes("останется") || r.includes("денег"))) {
+      reasons.push("после этого останется больше денег в месяц");
     }
   }
 
@@ -158,7 +158,7 @@ export function calculateTaskPriority(
     reasons:
       uniqueReasons.length > 0
         ? uniqueReasons
-        : ["максимальный эффект среди доступных действий"],
+        : ["самое полезное действие из доступных сейчас"],
   };
 }
 

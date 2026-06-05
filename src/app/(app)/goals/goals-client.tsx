@@ -167,7 +167,7 @@ export function GoalsPageClient({ goals, debts, tasks }: GoalsPageClientProps) {
   return (
     <div>
       <PageHeader
-        title="Финансовые цели"
+        title="Ваши цели"
         description="Маршрут из точки А в точку Б — с конкретными суммами и прогрессом"
         action={
           <Button onClick={openCreate}>

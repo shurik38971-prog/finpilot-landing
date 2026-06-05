@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { buildFallbackComparison } from "@/lib/finance/analysis-comparison";
 import { groupAnalysesByPeriod } from "@/lib/finance/history-groups";
+import { COPY } from "@/lib/copy/ui";
 import { formatHistoryDate } from "@/lib/utils";
 import type { AnalysisComparison, AnalysisRecord } from "@/types/analysis";
 import {
@@ -62,7 +63,7 @@ function DeltaBadge({ delta }: { delta: number | null }) {
     >
       {isUp ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
       {isUp ? "+" : ""}
-      {delta} пунктов
+      {delta} баллов
     </span>
   );
 }
@@ -85,9 +86,9 @@ function HistoryTable({
       <thead>
         <tr className="border-b border-border text-muted">
           <th className="px-4 py-3 text-left font-medium">Дата</th>
-          <th className="px-4 py-3 text-left font-medium">Индекс</th>
+          <th className="px-4 py-3 text-left font-medium">{COPY.moneyScore}</th>
           {showDelta && (
-            <th className="px-4 py-3 text-left font-medium">Δ</th>
+            <th className="px-4 py-3 text-left font-medium">Изменение</th>
           )}
           <th className="px-4 py-3 text-left font-medium">Главная проблема</th>
           <th className="px-4 py-3 text-left font-medium">Следующий шаг</th>
@@ -210,7 +211,7 @@ export function HistoryPageClient({ analyses }: HistoryPageClientProps) {
           <div className="px-5 pb-5 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
               <div className="rounded-lg bg-surface-hover/50 p-3">
-                <p className="text-muted text-xs mb-1">Текущий индекс</p>
+                <p className="text-muted text-xs mb-1">Сейчас</p>
                 <p className="text-2xl font-bold">
                   {comparison.current.financial_index ?? "—"}
                 </p>

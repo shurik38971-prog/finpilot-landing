@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import type { CashFlowForecast } from "@/types/database";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { COPY } from "@/lib/copy/ui";
 import { formatCurrency } from "@/lib/utils";
 
 interface CashFlowChartProps {
@@ -23,7 +24,9 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
     <Card>
       <CardHeader>
         <CardTitle>Прогноз на 3 месяца</CardTitle>
-        <CardDescription>Ожидаемый денежный поток с учётом нестабильности дохода</CardDescription>
+        <CardDescription>
+          Сколько останется каждый месяц с учётом нестабильного дохода
+        </CardDescription>
       </CardHeader>
       <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
@@ -71,7 +74,7 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
             <Area
               type="monotone"
               dataKey="net"
-              name="Чистый поток"
+              name={COPY.leftPerMonth}
               stroke="#3b82f6"
               fill="url(#netGrad)"
             />

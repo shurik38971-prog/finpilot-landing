@@ -1,10 +1,10 @@
 export const PROBLEM_LABELS = [
-  "Кассовый разрыв",
-  "Высокая долговая нагрузка",
+  "Не хватает денег до следующего дохода",
+  "Слишком много платежей по долгам",
   "Нестабильный доход",
-  "Недостаточный резерв",
+  "Мало отложено на чёрный день",
   "Высокие обязательные расходы",
-  "Низкая диверсификация дохода",
+  "Мало разных источников дохода",
 ] as const;
 
 export function inferProblemLabel(threat: string): string {
@@ -16,16 +16,16 @@ export function inferProblemLabel(threat: string): string {
     text.includes("отрицательн") ||
     text.includes("дефицит")
   ) {
-    return "Кассовый разрыв";
+    return "Не хватает денег до следующего дохода";
   }
   if (text.includes("долг") || text.includes("кредит")) {
-    return "Высокая долговая нагрузка";
+    return "Слишком много платежей по долгам";
   }
   if (text.includes("нестабил") || text.includes("доход")) {
     return "Нестабильный доход";
   }
   if (text.includes("резерв") || text.includes("подушк")) {
-    return "Недостаточный резерв";
+    return "Мало отложено на чёрный день";
   }
   if (text.includes("обязательн") || text.includes("расход")) {
     return "Высокие обязательные расходы";

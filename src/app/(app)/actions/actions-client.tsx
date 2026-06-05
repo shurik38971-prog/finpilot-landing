@@ -24,6 +24,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TaskImpactPreview } from "@/components/tasks/task-impact-preview";
+import { benefitLabel, importanceLabel } from "@/lib/copy/ui";
 
 function impactVariant(score: number): "danger" | "warning" | "success" | "default" {
   if (score >= 70) return "danger";
@@ -72,7 +73,7 @@ function PrimaryActionCard({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted mb-1">
-              Следующее лучшее действие · приоритет {task.priority_score}/100
+              Следующее лучшее действие · {importanceLabel(task.priority_score)}
             </p>
             <CardTitle className="text-lg">{task.title}</CardTitle>
             <div className="mt-2">
@@ -80,7 +81,7 @@ function PrimaryActionCard({
             </div>
           </div>
           <Badge variant={impactVariant(task.impact_score)}>
-            {task.impact_label ?? `${task.impact_score}`}
+            {benefitLabel(task.impact_score, task.impact_label)}
           </Badge>
         </div>
         {task.description && (
@@ -96,7 +97,7 @@ function PrimaryActionCard({
       </CardHeader>
       <div className="px-5 pb-5 flex flex-wrap items-center gap-3">
         <span className="text-xs text-muted">
-          Эффект: {task.impact_score}/100
+          {benefitLabel(task.impact_score, task.impact_label)}
         </span>
         {task.due_date && (
           <span className="text-xs text-muted flex items-center gap-1">
@@ -158,7 +159,7 @@ function TaskRow({
           </Badge>
           {!isDone && (
             <Badge variant={impactVariant(task.impact_score)}>
-              {task.impact_label ?? task.impact_score}
+              {benefitLabel(task.impact_score, task.impact_label)}
             </Badge>
           )}
         </div>
@@ -241,7 +242,7 @@ export function ActionsPageClient({ tasks }: ActionsPageClientProps) {
     <div>
       <PageHeader
         title="Что делать сейчас"
-        description="Конкретные шаги из ИИ-анализа — от главного действия к плану на месяц"
+        description="Дела из ИИ-разбора — сначала самое важное, потом остальное"
       />
 
       {tasks.length === 0 ? (
@@ -253,7 +254,7 @@ export function ActionsPageClient({ tasks }: ActionsPageClientProps) {
             <h3 className="text-lg font-medium mb-1">Задач пока нет</h3>
             <p className="text-sm text-muted max-w-sm mb-4">
               Запустите ИИ-анализ — FinPilot создаст персональный список
-              финансовых действий.
+              дел из разбора.
             </p>
             <Link href="/analyze">
               <Button>Запустить ИИ-анализ</Button>

@@ -59,7 +59,7 @@ export function DemoDataBanner({ isEmpty }: DemoDataBannerProps) {
       <CardHeader>
         <CardTitle className="text-base">Начните с демо-данных</CardTitle>
         <CardDescription>
-          Загрузите пример финансов самозанятого: доходы, расходы и 3 долга —
+          Загрузите пример для самозанятого: доходы, расходы и 3 долга —
           чтобы сразу увидеть дашборд, прогноз и сценарии в действии.
         </CardDescription>
       </CardHeader>

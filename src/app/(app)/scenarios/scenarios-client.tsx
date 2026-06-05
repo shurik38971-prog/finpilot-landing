@@ -12,6 +12,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import type { Debt, Expense, Income, ScenarioResult } from "@/types/database";
 import { useMemo, useState } from "react";
+import { COPY } from "@/lib/copy/ui";
 import { getIndexLabel } from "@/lib/finance/index";
 
 export function ScenariosPageClient({
@@ -48,7 +49,7 @@ export function ScenariosPageClient({
     <div>
       <PageHeader
         title="Что будет, если..."
-        description="Моделирование финансовых сценариев"
+        description="Посмотрите, как изменятся ваши деньги в разных ситуациях"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -162,7 +163,7 @@ function ScenarioCard({ result }: { result: ScenarioResult }) {
           </span>
         </div>
         <div className="flex justify-between items-center pt-2 border-t border-border">
-          <span className="text-muted">Фин. индекс</span>
+          <span className="text-muted">{COPY.moneyScore}</span>
           <Badge className={indexLabel.color}>
             {result.financialIndex === null
               ? indexLabel.label

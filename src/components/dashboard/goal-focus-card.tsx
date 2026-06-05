@@ -2,6 +2,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
+import { benefitLabel } from "@/lib/copy/ui";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
 import type { PrimaryGoalFocus } from "@/types/tasks";
 import { TaskImpactPreview } from "@/components/tasks/task-impact-preview";
@@ -28,8 +29,8 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
             Главная цель
           </CardTitle>
           <CardDescription>
-            Создайте финансовую цель и запустите ИИ-анализ — FinPilot свяжет
-            действия с маршрутом к результату.
+            Задайте цель и запустите ИИ-разбор — FinPilot свяжет дела с путём
+            к результату.
           </CardDescription>
         </CardHeader>
         <div className="px-5 pb-5 flex gap-2">
@@ -91,7 +92,7 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
             )}
             <div className="flex flex-wrap gap-2 text-xs text-muted">
               <Badge variant={impactVariant(task.impact_score)}>
-                {task.impact_label ?? task.impact_score}
+                {benefitLabel(task.impact_score, task.impact_label)}
               </Badge>
               {task.due_date && (
                 <span>до {formatHistoryDate(task.due_date)}</span>

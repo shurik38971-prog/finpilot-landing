@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createTaskImpacts } from "@/lib/ai/create-task-impacts";
 import { syncPendingTaskPriorities } from "@/lib/ai/sync-task-priorities";
+import { BENEFIT_LABELS } from "@/lib/copy/ui";
 import { computeDashboardSummary } from "@/lib/finance/index";
 import { matchTaskToGoal } from "@/lib/finance/match-task-to-goal";
 import type { Debt, Expense, Income } from "@/types/database";
@@ -21,9 +22,9 @@ const PRIORITY_SCORE: Record<string, number> = {
 };
 
 const PRIORITY_LABEL: Record<string, string> = {
-  high: "высокий эффект",
-  medium: "средний эффект",
-  low: "низкий эффект",
+  high: BENEFIT_LABELS.high,
+  medium: BENEFIT_LABELS.medium,
+  low: BENEFIT_LABELS.low,
 };
 
 interface TaskInsert {
@@ -89,7 +90,7 @@ function mapNextBestAction(
     title,
     description,
     impact_score: Math.min(100, Math.max(1, action.impact_score ?? 80)),
-    impact_label: action.impact_label ?? "высокий эффект",
+    impact_label: action.impact_label ?? BENEFIT_LABELS.high,
     due_date: dueDateFromDays(action.due_days ?? 7),
   };
 }
@@ -113,7 +114,7 @@ function mapAction30Day(
     title,
     description,
     impact_score: PRIORITY_SCORE[priority] ?? 50,
-    impact_label: PRIORITY_LABEL[priority] ?? "средний эффект",
+    impact_label: PRIORITY_LABEL[priority] ?? BENEFIT_LABELS.medium,
     due_date: dueDateFromDays(30),
   };
 }

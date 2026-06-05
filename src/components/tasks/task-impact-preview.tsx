@@ -1,3 +1,4 @@
+import { COPY } from "@/lib/copy/ui";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { TaskImpact } from "@/types/task-impact";
 
@@ -89,17 +90,17 @@ export function TaskImpactPreview({
   if (compact) {
     return (
       <div className={cn("space-y-1.5 text-xs", className)}>
-        <p className="text-muted">После выполнения:</p>
+        <p className="text-muted">{COPY.afterDone}</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {indexDelta !== null && indexDelta !== 0 && (
             <span>
-              <DeltaValue delta={indexDelta} suffix=" к индексу" />
+              <DeltaValue delta={indexDelta} suffix=" к оценке" />
             </span>
           )}
           {cashflowDelta !== 0 && (
             <span className="text-emerald-400 font-medium">
               {cashflowDelta > 0 ? "+" : ""}
-              {formatCurrency(cashflowDelta)} к чистому потоку
+              {formatCurrency(cashflowDelta)} в месяц
             </span>
           )}
           {goalMonthsDelta !== null && goalMonthsDelta !== 0 && (
@@ -119,15 +120,15 @@ export function TaskImpactPreview({
         className
       )}
     >
-      <p className="text-xs font-medium text-foreground">Ожидаемый эффект</p>
+      <p className="text-xs font-medium text-foreground">{COPY.whatChanges}</p>
 
       <MetricRow
-        label="Финансовый индекс"
+        label={COPY.moneyScore}
         current={impact.current_index}
         projected={impact.projected_index}
       />
       <MetricRow
-        label="Чистый поток"
+        label={COPY.leftPerMonth}
         current={impact.current_cashflow}
         projected={impact.projected_cashflow}
         format="currency"
@@ -143,7 +144,7 @@ export function TaskImpactPreview({
       )}
 
       <div className="flex items-center justify-between pt-1 text-sm border-t border-border/40">
-        <span className="text-muted">Вероятность результата</span>
+        <span className="text-muted">{COPY.howLikely}</span>
         <span
           className={cn(
             "font-medium",

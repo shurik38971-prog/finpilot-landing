@@ -15,6 +15,7 @@ import type {
   AnalysisPlanItem,
   HealthStatus,
 } from "@/types/analysis";
+import { COPY } from "@/lib/copy/ui";
 import { AlertTriangle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -112,7 +113,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
     <div>
       <PageHeader
         title="ИИ-анализ"
-        description="Персональные рекомендации от финансового директора"
+        description="Персональный разбор ваших денег и что делать дальше"
         action={
           <Button onClick={handleAnalyze} disabled={loading || isEmpty}>
             {loading ? (
@@ -131,7 +132,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
             <CardTitle className="text-base">Недостаточно данных</CardTitle>
             <CardDescription>
               Добавьте доходы, расходы или долги — тогда ИИ сможет провести
-              анализ вашей финансовой ситуации.
+              разбор вашей ситуации с деньгами.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -146,10 +147,10 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
       {!result && !loading && !error && !isEmpty && (
         <Card>
           <CardHeader>
-            <CardTitle>Финансовый директор на базе ИИ</CardTitle>
+            <CardTitle>Разбор от ИИ</CardTitle>
             <CardDescription>
-              Получите диагностику, утечки денег, оценку риска кассового разрыва
-              и планы на 7, 30 и 90 дней
+              Узнайте, куда уходят деньги, хватит ли до следующего дохода и что
+              сделать на 7, 30 и 90 дней
             </CardDescription>
           </CardHeader>
         </Card>
@@ -168,7 +169,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
               </CardTitle>
               <CardDescription>
                 {tasksCreated && tasksCreated > 0
-                  ? "Финансовые задачи добавлены в Action Engine."
+                  ? "Новые дела добавлены в список «Что делать»."
                   : "Новые задачи не созданы — возможно, похожие уже активны."}
               </CardDescription>
             </CardHeader>
@@ -234,7 +235,9 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
           {result.cash_gap_risk && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Риск кассового разрыва</CardTitle>
+                <CardTitle className="text-base">
+                  Риск: не хватит денег до следующего дохода
+                </CardTitle>
               </CardHeader>
               <div className="px-5 pb-5 space-y-2 text-sm">
                 <Badge variant={levelVariants[result.cash_gap_risk.level]}>
@@ -243,7 +246,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
                 <p className="leading-relaxed">{result.cash_gap_risk.description}</p>
                 {result.cash_gap_risk.months_until_gap != null && (
                   <p className="text-muted">
-                    Оценка до разрыва: {result.cash_gap_risk.months_until_gap} мес.
+                    Примерно через: {result.cash_gap_risk.months_until_gap} мес.
                   </p>
                 )}
               </div>
@@ -265,7 +268,7 @@ export function AnalyzePageClient({ isEmpty }: AnalyzePageClientProps) {
               {result.cashflow_forecast_comment && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Денежный поток</CardTitle>
+                    <CardTitle className="text-base">{COPY.leftPerMonth}</CardTitle>
                   </CardHeader>
                   <p className="px-5 pb-5 text-sm leading-relaxed">
                     {result.cashflow_forecast_comment}

@@ -56,7 +56,7 @@ export function ExpensesPageClient({ expenses }: { expenses: Expense[] }) {
         ]}
         emptyIcon={TrendingDown}
         emptyTitle="Нет расходов"
-        emptyDescription="Добавьте расходы для точного финансового анализа"
+        emptyDescription="Добавьте расходы — так разбор от ИИ будет точнее"
         addLabel="Добавить расход"
         formComponent={ExpenseFormWrapper}
         onDelete={deleteExpense}

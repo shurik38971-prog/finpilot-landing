@@ -39,7 +39,7 @@ export default async function DashboardPage() {
       <div>
         <PageHeader
           title="Дашборд"
-          description="Обзор вашего финансового состояния"
+          description="Сводка по вашим деньгам"
         />
 
         <div className="space-y-6">

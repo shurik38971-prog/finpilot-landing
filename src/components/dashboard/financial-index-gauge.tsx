@@ -1,5 +1,6 @@
 "use client";
 
+import { COPY } from "@/lib/copy/ui";
 import { getIndexLabel } from "@/lib/finance/index";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -12,8 +13,8 @@ export function FinancialIndexGauge({ index }: FinancialIndexGaugeProps) {
     return (
       <Card className="flex flex-col items-center">
         <CardHeader className="text-center w-full">
-          <CardTitle>Финансовый индекс</CardTitle>
-          <CardDescription>Здоровье ваших финансов от 0 до 100</CardDescription>
+          <CardTitle>{COPY.moneyScore}</CardTitle>
+          <CardDescription>{COPY.moneyScoreHint}</CardDescription>
         </CardHeader>
         <div className="flex flex-1 items-center justify-center py-12 px-4 text-center">
           <p className="text-sm text-muted">Недостаточно данных для расчёта</p>
@@ -29,8 +30,8 @@ export function FinancialIndexGauge({ index }: FinancialIndexGaugeProps) {
   return (
     <Card className="flex flex-col items-center">
       <CardHeader className="text-center w-full">
-        <CardTitle>Финансовый индекс</CardTitle>
-        <CardDescription>Здоровье ваших финансов от 0 до 100</CardDescription>
+        <CardTitle>{COPY.moneyScore}</CardTitle>
+        <CardDescription>{COPY.moneyScoreHint}</CardDescription>
       </CardHeader>
       <div className="relative my-4">
         <svg width="140" height="140" className="-rotate-90">

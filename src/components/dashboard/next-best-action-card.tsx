@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
+import { COPY, importanceLabel } from "@/lib/copy/ui";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
 import type { NextBestActionResult } from "@/types/tasks";
@@ -38,7 +39,7 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
             Следующее лучшее действие
           </CardTitle>
           <CardDescription>
-            FinPilot выберет одно действие с максимальным эффектом. Запустите
+            FinPilot подскажет одно самое полезное дело. Запустите
             ИИ-анализ или создайте цель.
           </CardDescription>
         </CardHeader>
@@ -83,7 +84,7 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant="danger" className="text-xs">
-                Приоритет {action.priority_score}/100
+                {importanceLabel(action.priority_score)}
               </Badge>
               {action.financial_impact > 0 && (
                 <Badge variant="success" className="text-xs">
@@ -115,12 +116,12 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
             motivation.monthlySavings !== null) && (
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2">
               <p className="text-xs font-medium text-emerald-400">
-                Если выполнить это действие:
+                {COPY.afterDone}
               </p>
               <ul className="text-sm space-y-1">
                 {motivation.indexFrom !== null && motivation.indexTo !== null && (
                   <li>
-                    Индекс:{" "}
+                    {COPY.moneyScore}:{" "}
                     <span className="text-muted">{motivation.indexFrom}</span>
                     {" → "}
                     <span className="text-emerald-400 font-medium">
@@ -131,13 +132,15 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
                 {motivation.goalMonthsFaster !== null &&
                   motivation.goalMonthsFaster > 0 && (
                     <li className="text-emerald-400">
-                      Цель: на {motivation.goalMonthsFaster} мес быстрее
+                      {COPY.goalFaster}: на {motivation.goalMonthsFaster} мес
+                      быстрее
                     </li>
                   )}
                 {motivation.monthlySavings !== null &&
                   motivation.monthlySavings > 0 && (
                     <li className="text-emerald-400">
-                      Экономия: {formatCurrency(motivation.monthlySavings)}/мес
+                      {COPY.monthlySavings}:{" "}
+                      {formatCurrency(motivation.monthlySavings)}/мес
                     </li>
                   )}
               </ul>
@@ -145,7 +148,7 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
           )}
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <span>Эффект: {action.impact_score}/100</span>
+            <span>{importanceLabel(action.priority_score)}</span>
             {action.due_date && (
               <span>· до {formatHistoryDate(action.due_date)}</span>
             )}
@@ -200,9 +203,9 @@ export function NextBestActionCard({ action }: NextBestActionCardProps) {
           ))}
         </ul>
         <div className="mt-4 pt-4 border-t border-border/50 text-xs text-muted">
-          FinPilot сравнивает все активные задачи и показывает ту, что даст
-          максимальный финансовый эффект прямо сейчас (приоритет{" "}
-          {action.priority_score}/100).
+          FinPilot сравнивает все активные дела и выбирает то, которое сейчас
+          принесёт больше всего пользы ({importanceLabel(action.priority_score)}
+          ).
         </div>
       </Modal>
     </>

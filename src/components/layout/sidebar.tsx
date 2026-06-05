@@ -28,7 +28,7 @@ const navItems = [
   { href: "/debts", label: "Долги", icon: CreditCard },
   { href: "/crisis", label: "Антикризис", icon: AlertTriangle },
   { href: "/scenarios", label: "Сценарии", icon: Zap },
-  { href: "/simulator", label: "Симулятор", icon: FlaskConical },
+  { href: "/simulator", label: "Что если", icon: FlaskConical },
   { href: "/actions", label: "Что делать", icon: CheckCircle2 },
   { href: "/analyze", label: "ИИ-анализ", icon: Sparkles },
   { href: "/history", label: "История", icon: History },

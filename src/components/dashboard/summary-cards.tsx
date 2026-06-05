@@ -1,3 +1,4 @@
+import { COPY } from "@/lib/copy/ui";
 import { formatCurrency } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { TrendingDown, TrendingUp, Wallet, CreditCard } from "lucide-react";
@@ -26,7 +27,7 @@ const cards = [
   },
   {
     key: "net",
-    label: "Чистый поток",
+    label: COPY.leftPerMonth,
     icon: Wallet,
     color: "text-accent",
     getValue: (p: SummaryCardsProps) => p.netCashFlow,

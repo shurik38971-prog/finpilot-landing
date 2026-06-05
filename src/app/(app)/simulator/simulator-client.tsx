@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { COPY } from "@/lib/copy/ui";
 import { getIndexLabel } from "@/lib/finance/index";
 import {
   buildCurrentFinanceState,
@@ -96,7 +97,7 @@ export function SimulatorPageClient({
   return (
     <div>
       <PageHeader
-        title="Финансовый симулятор"
+        title="Что будет, если…"
         description="Что будет, если изменить доход, расходы или долги — без сохранения данных"
       />
 
@@ -177,7 +178,7 @@ export function SimulatorPageClient({
 
           <div className="px-5 pb-5 space-y-4">
             <ResultRow
-              label="Финансовый индекс"
+              label={COPY.moneyScore}
               current={current.financialIndex}
               projected={projected.financialIndex}
               extra={
@@ -195,7 +196,7 @@ export function SimulatorPageClient({
               }
             />
             <ResultRow
-              label="Чистый поток"
+              label={COPY.leftPerMonth}
               current={current.netCashFlow}
               projected={projected.netCashFlow}
               format="currency"
@@ -208,7 +209,7 @@ export function SimulatorPageClient({
               }
             />
             <ResultRow
-              label="Долговая нагрузка"
+              label={COPY.debtIncomeShare}
               current={current.debtLoadPercent}
               projected={projected.debtLoadPercent}
               suffix="%"
