@@ -230,6 +230,7 @@ export async function POST(_req: Request) {
     revalidatePath("/actions");
     revalidatePath("/dashboard");
     revalidatePath("/goals");
+    revalidatePath("/simulator");
 
     return NextResponse.json({ ...parsed, tasks_created: tasksCreated });
   } catch (error) {

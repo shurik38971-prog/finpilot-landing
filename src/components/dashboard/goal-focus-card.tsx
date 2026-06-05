@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn, formatCurrency, formatHistoryDate } from "@/lib/utils";
 import { GOAL_TYPE_LABELS } from "@/types/goals";
 import type { PrimaryGoalFocus } from "@/types/tasks";
+import { TaskImpactPreview } from "@/components/tasks/task-impact-preview";
 import { CheckCircle2, Target } from "lucide-react";
 import Link from "next/link";
 
@@ -45,7 +46,7 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
     );
   }
 
-  const { goal, task, remaining, progressPercent } = focus;
+  const { goal, task, remaining, progressPercent, taskImpact } = focus;
 
   return (
     <Card className="border-accent/30 bg-accent/5">
@@ -96,6 +97,12 @@ export function GoalFocusCard({ focus }: GoalFocusCardProps) {
                 <span>до {formatHistoryDate(task.due_date)}</span>
               )}
             </div>
+            {(taskImpact ?? task.impact) && (
+              <TaskImpactPreview
+                impact={(taskImpact ?? task.impact)!}
+                compact
+              />
+            )}
           </div>
         ) : (
           <p className="text-sm text-muted">

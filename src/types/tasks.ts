@@ -1,4 +1,5 @@
 import type { FinancialGoal } from "@/types/goals";
+import type { TaskImpact } from "@/types/task-impact";
 
 export type TaskStatus = "pending" | "done" | "postponed";
 
@@ -25,6 +26,7 @@ export type FinancialTaskGoal = Pick<
 
 export interface FinancialTaskWithGoal extends FinancialTask {
   goal: FinancialTaskGoal | null;
+  impact: TaskImpact | null;
 }
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
@@ -38,4 +40,5 @@ export interface PrimaryGoalFocus {
   task: FinancialTaskWithGoal | null;
   remaining: number;
   progressPercent: number;
+  taskImpact: TaskImpact | null;
 }

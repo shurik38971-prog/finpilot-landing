@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createTaskImpacts } from "@/lib/ai/create-task-impacts";
 import { matchTaskToGoal } from "@/lib/finance/match-task-to-goal";
+import type { Debt, Expense, Income } from "@/types/database";
 import type {
   AiAction30Day,
   AiAnalysisResult,
@@ -120,16 +122,23 @@ export async function createTasksFromAnalysis(
   analysisId: string,
   parsed: AiAnalysisResult
 ): Promise<number> {
-  const [{ data: pendingTasks }, { data: goals }, { data: debts }] =
-    await Promise.all([
-      supabase
-        .from("financial_tasks")
-        .select("title")
-        .eq("user_id", userId)
-        .eq("status", "pending"),
-      supabase.from("financial_goals").select("*").eq("user_id", userId),
-      supabase.from("debts").select("id, title").eq("user_id", userId),
-    ]);
+  const [
+    { data: pendingTasks },
+    { data: goals },
+    { data: debts },
+    { data: incomes },
+    { data: expenses },
+  ] = await Promise.all([
+    supabase
+      .from("financial_tasks")
+      .select("title")
+      .eq("user_id", userId)
+      .eq("status", "pending"),
+    supabase.from("financial_goals").select("*").eq("user_id", userId),
+    supabase.from("debts").select("*").eq("user_id", userId),
+    supabase.from("incomes").select("*").eq("user_id", userId),
+    supabase.from("expenses").select("*").eq("user_id", userId),
+  ]);
 
   const userGoals = (goals ?? []) as FinancialGoal[];
   const debtTitles = (debts ?? []).map((d) => d.title);
@@ -173,11 +182,22 @@ export async function createTasksFromAnalysis(
 
   if (toInsert.length === 0) return 0;
 
-  const { error } = await supabase.from("financial_tasks").insert(toInsert);
+  const { data: inserted, error } = await supabase
+    .from("financial_tasks")
+    .insert(toInsert)
+    .select("id, title, description, impact_score, goal_id, goal_progress_amount");
+
   if (error) {
     console.error("Failed to create financial tasks:", error);
     return 0;
   }
 
-  return toInsert.length;
+  await createTaskImpacts(supabase, userId, inserted ?? [], {
+    incomes: (incomes ?? []) as Income[],
+    expenses: (expenses ?? []) as Expense[],
+    debts: (debts ?? []) as Debt[],
+    goals: userGoals,
+  });
+
+  return inserted?.length ?? 0;
 }

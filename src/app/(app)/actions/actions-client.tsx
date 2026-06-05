@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { TaskImpactPreview } from "@/components/tasks/task-impact-preview";
 
 function impactVariant(score: number): "danger" | "warning" | "success" | "default" {
   if (score >= 70) return "danger";
@@ -84,6 +85,11 @@ function PrimaryActionCard({
           <CardDescription className="text-sm leading-relaxed">
             {task.description}
           </CardDescription>
+        )}
+        {task.impact && (
+          <div className="mt-3">
+            <TaskImpactPreview impact={task.impact} />
+          </div>
         )}
       </CardHeader>
       <div className="px-5 pb-5 flex flex-wrap items-center gap-3">
@@ -158,6 +164,7 @@ function TaskRow({
           <p className="text-sm text-muted leading-relaxed">{task.description}</p>
         )}
         <GoalBadge task={task} />
+        {task.impact && <TaskImpactPreview impact={task.impact} />}
         <p className="text-xs text-muted">
           {formatHistoryDate(task.created_at.split("T")[0])}
           {task.due_date && ` · срок ${formatHistoryDate(task.due_date)}`}

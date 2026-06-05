@@ -14,6 +14,7 @@ const FINANCIAL_PATHS = [
   "/debts",
   "/crisis",
   "/scenarios",
+  "/simulator",
   "/analyze",
   "/history",
   "/goals",

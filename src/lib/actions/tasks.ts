@@ -5,17 +5,19 @@ import { applyGoalProgressOnTaskComplete } from "@/lib/finance/goal-progress";
 import { pickPrimaryGoal } from "@/lib/finance/match-task-to-goal";
 import { revalidatePath } from "next/cache";
 import type { FinancialGoal } from "@/types/goals";
+import type { TaskImpact } from "@/types/task-impact";
 import type {
   FinancialTask,
   FinancialTaskWithGoal,
   PrimaryGoalFocus,
 } from "@/types/tasks";
 
-const TASK_PATHS = ["/actions", "/dashboard", "/analyze", "/goals"] as const;
+const TASK_PATHS = ["/actions", "/dashboard", "/analyze", "/goals", "/simulator"] as const;
 
 const TASK_SELECT = `
   *,
-  goal:financial_goals(id, title, type, target_amount, current_amount)
+  goal:financial_goals(id, title, type, target_amount, current_amount),
+  impact:task_impacts(*)
 `;
 
 function revalidateTaskPages() {
@@ -33,12 +35,26 @@ async function getUserId() {
   return { supabase, userId: user.id };
 }
 
+function normalizeImpact(
+  raw: TaskImpact | TaskImpact[] | null | undefined
+): TaskImpact | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) {
+    return raw[0] ?? null;
+  }
+  return raw;
+}
+
 function mapTask(row: Record<string, unknown>): FinancialTaskWithGoal {
   const goal = row.goal as FinancialTaskWithGoal["goal"];
-  const { goal: _omit, ...rest } = row;
-  void _omit;
+  const impact = normalizeImpact(
+    row.impact as TaskImpact | TaskImpact[] | null | undefined
+  );
+  const { goal: _goal, impact: _impact, ...rest } = row;
+  void _goal;
+  void _impact;
   const task = rest as unknown as FinancialTask;
-  return { ...task, goal: goal ?? null };
+  return { ...task, goal: goal ?? null, impact };
 }
 
 export async function getFinancialTasks(): Promise<FinancialTaskWithGoal[]> {
@@ -136,6 +152,7 @@ export async function getPrimaryGoalFocus(): Promise<PrimaryGoalFocus | null> {
     task,
     remaining,
     progressPercent,
+    taskImpact: task?.impact ?? null,
   };
 }
 
