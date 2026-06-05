@@ -2,6 +2,26 @@ import { getAnalysisContext } from "@/lib/actions/finance";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+function getGptunnelConfig():
+  | { ok: true; apiKey: string; baseUrl: string; model: string }
+  | { ok: false; error: string } {
+  const apiKey = process.env.GPTUNNEL_API_KEY;
+  const baseUrl = process.env.GPTUNNEL_BASE_URL;
+  const model = process.env.GPTUNNEL_MODEL;
+
+  if (!apiKey) {
+    return { ok: false, error: "GPTUNNEL_API_KEY не настроен" };
+  }
+  if (!baseUrl) {
+    return { ok: false, error: "GPTUNNEL_BASE_URL не настроен" };
+  }
+  if (!model) {
+    return { ok: false, error: "GPTUNNEL_MODEL не настроен" };
+  }
+
+  return { ok: true, apiKey, baseUrl: baseUrl.replace(/\/$/, ""), model };
+}
+
 export async function POST() {
   try {
     const supabase = await createClient();
@@ -13,13 +33,9 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "OPENROUTER_API_KEY не настроен" },
-        { status: 500 }
-      );
+    const config = getGptunnelConfig();
+    if (!config.ok) {
+      return NextResponse.json({ error: config.error }, { status: 500 });
     }
 
     const body = await getAnalysisContext();
@@ -53,38 +69,33 @@ ${JSON.stringify(body, null, 2)}
 }
 `;
 
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://finpilot.vercel.app",
-          "X-Title": "FinPilot",
-        },
-        body: JSON.stringify({
-          model: "qwen/qwen3.6-plus",
-          messages: [
-            {
-              role: "system",
-              content:
-                "Ты финансовый аналитик. Отвечай только валидным JSON без markdown.",
-            },
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          temperature: 0.3,
-        }),
-      }
-    );
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Ты финансовый аналитик. Отвечай только валидным JSON без markdown.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       return NextResponse.json(
-        { error: "Ошибка Qwen API", details: errorText },
+        { error: "Ошибка GPTunnel API", details: errorText },
         { status: response.status }
       );
     }
