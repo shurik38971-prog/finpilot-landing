@@ -12,6 +12,7 @@ import { AppLink } from "@/components/landing/app-link";
 import { LANDING } from "@/lib/copy/landing";
 import {
   ArrowRight,
+  Briefcase,
   Check,
   ChevronRight,
   Navigation,
@@ -19,6 +20,8 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  User,
+  Users,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -228,6 +231,45 @@ function HowItWorksSection() {
             ))}
           </StaggerChildren>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function ProfileAdaptationSection() {
+  const { profileAdaptation } = LANDING;
+  const icons = [User, Users, Briefcase, Target];
+
+  return (
+    <section className="section-padding border-t border-white/[0.06] bg-white/[0.01]">
+      <div className="mx-auto max-w-6xl">
+        <FadeIn>
+          <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+            {profileAdaptation.title}
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-muted leading-relaxed">
+            {profileAdaptation.subtitle}
+          </p>
+        </FadeIn>
+
+        <StaggerChildren className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {profileAdaptation.cards.map((card, i) => {
+            const Icon = icons[i % icons.length];
+            return (
+              <StaggerItem key={card.title}>
+                <article className="glass group h-full p-6 transition-all duration-300 hover:border-white/[0.14] hover:bg-white/[0.05]">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] text-muted transition-colors group-hover:bg-accent/15 group-hover:text-accent">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-medium leading-snug">{card.title}</h3>
+                  <p className="mt-3 text-sm text-muted leading-relaxed">
+                    {card.text}
+                  </p>
+                </article>
+              </StaggerItem>
+            );
+          })}
+        </StaggerChildren>
       </div>
     </section>
   );
@@ -542,6 +584,7 @@ export function LandingPage() {
         <SeoIntroSection />
         <ProblemSection />
         <HowItWorksSection />
+        <ProfileAdaptationSection />
         <BenefitsSection />
         <ExampleSection />
         <AudienceSegmentsSection />
