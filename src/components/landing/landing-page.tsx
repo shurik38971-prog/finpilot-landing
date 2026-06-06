@@ -126,6 +126,27 @@ function HeroSection() {
   );
 }
 
+function SeoIntroSection() {
+  const { seoIntro } = LANDING;
+
+  return (
+    <section className="section-padding border-t border-white/[0.06] bg-white/[0.01]">
+      <div className="mx-auto max-w-3xl text-center">
+        <FadeIn>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {seoIntro.title}
+          </h2>
+          <div className="mt-6 space-y-4 text-muted leading-relaxed text-lg">
+            {seoIntro.paragraphs.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
 function ProblemSection() {
   const { problem } = LANDING;
   const icons = [TrendingUp, Zap, Target, Sparkles, ChevronRight];
@@ -325,33 +346,59 @@ function ExampleSection() {
   );
 }
 
-function AudienceSection() {
-  const { audience } = LANDING;
+function AudienceSegmentsSection() {
+  const { audienceSegments } = LANDING;
 
   return (
     <section className="section-padding border-t border-white/[0.06]">
-      <div className="mx-auto max-w-6xl text-center">
+      <div className="mx-auto max-w-6xl">
         <FadeIn>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            {audience.title}
+          <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+            {audienceSegments.title}
           </h2>
         </FadeIn>
 
-        <FadeIn delay={0.1}>
-          <div className="mt-12 flex flex-wrap justify-center gap-3">
-            {audience.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm transition-colors hover:border-accent/30 hover:bg-accent/5"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <p className="mx-auto mt-10 max-w-xl text-muted leading-relaxed">
-            {audience.note}
-          </p>
+        <StaggerChildren className="mt-14 grid gap-6 lg:grid-cols-2">
+          {audienceSegments.segments.map((segment) => (
+            <StaggerItem key={segment.title}>
+              <article className="glass h-full p-6 sm:p-8">
+                <h3 className="text-xl font-medium">{segment.title}</h3>
+                <p className="mt-4 text-muted leading-relaxed">
+                  {segment.text}
+                </p>
+              </article>
+            </StaggerItem>
+          ))}
+        </StaggerChildren>
+      </div>
+    </section>
+  );
+}
+
+function FinanceQuestionsSection() {
+  const { financeQuestions } = LANDING;
+
+  return (
+    <section className="section-padding border-t border-white/[0.06] bg-white/[0.01]">
+      <div className="mx-auto max-w-6xl">
+        <FadeIn>
+          <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+            {financeQuestions.title}
+          </h2>
         </FadeIn>
+
+        <StaggerChildren className="mt-14 grid gap-6 md:grid-cols-2">
+          {financeQuestions.items.map((item) => (
+            <StaggerItem key={item.title}>
+              <article className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 sm:p-7 h-full">
+                <h3 className="text-lg font-medium">{item.title}</h3>
+                <p className="mt-3 text-sm text-muted leading-relaxed">
+                  {item.answer}
+                </p>
+              </article>
+            </StaggerItem>
+          ))}
+        </StaggerChildren>
       </div>
     </section>
   );
@@ -471,11 +518,13 @@ export function LandingPage() {
       <LandingHeader />
       <main>
         <HeroSection />
+        <SeoIntroSection />
         <ProblemSection />
         <HowItWorksSection />
         <BenefitsSection />
         <ExampleSection />
-        <AudienceSection />
+        <AudienceSegmentsSection />
+        <FinanceQuestionsSection />
         <LeadMagnetSection />
         <FaqSection />
         <FinalCtaSection />
