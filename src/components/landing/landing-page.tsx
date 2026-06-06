@@ -492,19 +492,40 @@ function FinalCtaSection() {
 }
 
 function LandingFooter() {
+  const { footer } = LANDING;
+  const linkClass = "transition-colors hover:text-foreground";
+
   return (
     <footer className="border-t border-white/[0.06] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 sm:flex-row">
-        <Logo variant="wordmark" iconSize={24} className="text-sm" />
-        <div className="flex items-center gap-6 text-sm text-muted">
-          <AppLink href="/login" className="transition-colors hover:text-foreground">
-            Войти
-          </AppLink>
-          <AppLink href="/signup" className="transition-colors hover:text-foreground">
-            Регистрация
-          </AppLink>
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row sm:items-start">
+          <Logo variant="wordmark" iconSize={24} className="text-sm" />
+          <nav
+            className="flex flex-col items-center gap-3 text-sm text-muted sm:items-end"
+            aria-label="Навигация в подвале"
+          >
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
+              <AppLink href="/login" className={linkClass}>
+                {footer.login}
+              </AppLink>
+              <AppLink href="/signup" className={linkClass}>
+                {footer.signup}
+              </AppLink>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
+              <AppLink href="/privacy" className={linkClass}>
+                {footer.privacy}
+              </AppLink>
+              <AppLink href="/consent" className={linkClass}>
+                {footer.consent}
+              </AppLink>
+              <Link href="/contacts" className={linkClass}>
+                {footer.contacts}
+              </Link>
+            </div>
+          </nav>
         </div>
-        <p className="text-sm text-muted">
+        <p className="text-center text-sm text-muted sm:text-left">
           © {new Date().getFullYear()} FinPilot
         </p>
       </div>
